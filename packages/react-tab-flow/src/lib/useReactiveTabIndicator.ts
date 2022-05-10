@@ -30,13 +30,8 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
   const targetTranslateXRef = React.useRef();
   const targetScaleXRef = React.useRef();
   const { width } = useWindowSize();
-  const lockRef = useRef(false);
 
   React.useLayoutEffect(() => {
-    // console.log(
-    //   "setting tabIndicatorRef to",
-    //   tabIndicatorRef.current.clientWidth
-    // );
     setTabIndicatorWidth(tabRefs.current[index].clientWidth);
     tabPanelsClientWidthRef.current = tabPanelsRef.current.clientWidth;
 
@@ -51,7 +46,6 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
       skipSettingIndexRef.current = true;
 
       tabPanelsRef.current.style = "scroll-snap-type: none";
-      lockRef.current = true;
       animateScrollTo([index * tabPanelsRef.current.clientWidth, 0], {
         elementToScroll: tabPanelsRef.current,
         // minDuration: 350,
@@ -65,7 +59,6 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
       })
         .then(() => {
           skipSettingIndexRef.current = false;
-          lockRef.current = false;
 
           tabPanelsRef.current.style = "scroll-snap-type: x mandatory";
 
@@ -309,9 +302,7 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
     if (lastTabRef.current !== currentTab) {
       if (!skipSettingIndexRef.current && index !== currentTabIndex) {
         // console.log("setting index from scroll to", currentTabIndex);
-        if (!lockRef.current) {
           skipForcedScrollRef.current = true;
-        }
         setIndex(currentTabIndex);
       }
       // console.log("setting tab indicator width to", currentTabWidth);
