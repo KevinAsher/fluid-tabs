@@ -28,11 +28,12 @@ function calculateScaleX(nextTabWidth, currentTabWidth, currentTabScrollProgress
   return scaleX;
 }
 
-function calculateTransform({currentTab, previousTab, nextTab, direction, relativeScroll, currentTabWidth, scrollLeftRef, currentTabIndex, tabRefs, tabClientWidthRefs}) {
+function calculateTransform({currentTab, previousTab, nextTab, direction, relativeScroll, scrollLeftRef, currentTabIndex, tabRefs}) {
     let currentTabScrollProgress;
     let scaleX;
     let translateX;
     let nextTabWidth;
+    let currentTabWidth = currentTab.clientWidth;
 
     if (currentTab !== nextTab || previousTab !== currentTab) {
       currentTabScrollProgress = direction === RIGHT ? relativeScroll % 1 : 1 - (relativeScroll % 1);
@@ -58,7 +59,7 @@ function calculateTransform({currentTab, previousTab, nextTab, direction, relati
         wasGonnaBeNextTabIndex = currentTabIndex - 1;
         wasGonnaBeNextTab = tabRefs.current[wasGonnaBeNextTabIndex];
       }
-      nextTabWidth = tabClientWidthRefs.current[wasGonnaBeNextTabIndex];
+      nextTabWidth = wasGonnaBeNextTab.clientWidth;
 
       scaleX = calculateScaleX(nextTabWidth, currentTabWidth, currentTabScrollProgress);
 
@@ -198,20 +199,12 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
   const scrollLeftRef = React.useRef(0);
   const skipSettingIndexRef = React.useRef(false);
   const skipForcedScrollRef = React.useRef(false);
-  const skipScrollAnimationRef = React.useRef(false);
-
   const tabPanelsClientWidth = useTabPanelsClientWidth(tabPanelsRef);
-  const previousTabPanelsClientWidth = usePrevious(tabPanelsClientWidth);
-  const tabClientWidthRefs = React.useRef();
   const tabOffsetLeftRefs = React.useRef();
-  const rafActiveRef = React.useRef(false);
-  const rafIdRef = React.useRef();
-  const targetTranslateXRef = React.useRef();
-  const targetScaleXRef = React.useRef();
+
   React.useLayoutEffect(() => {
     setTabIndicatorWidth(tabRefs.current[index].clientWidth);
     skipForcedScrollRef.current = true;
-    tabClientWidthRefs.current = tabRefs.current.map((el) => el.clientWidth);
     tabOffsetLeftRefs.current = tabRefs.current.map((el) => el.offsetLeft);
   }, [tabPanelsClientWidth]);
 
@@ -224,7 +217,6 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
       tabPanelsRef.current.style = "scroll-snap-type: none";
       animateScrollTo([index * tabPanelsClientWidth, 0], {
         elementToScroll: tabPanelsRef.current,
-        // minDuration: 350,
         // minDuration: 350,
         maxDuration: 300,
 
@@ -252,9 +244,6 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
 
   }, [index, tabPanelsClientWidth]);
 
-  const onScrollChanged = (scaleX, scaleY) => {
-  };
-
   const startAnimation = React.useCallback((scroll) => {
     const relativeScroll = scroll / tabPanelsClientWidth;
     const direction = previousRelativeScrollRef.current < relativeScroll ? RIGHT : LEFT;
@@ -269,7 +258,6 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
     });
     
     const currentTabIndex = tabRefs.current.findIndex(tab => tab === currentTab);
-    const currentTabWidth = tabClientWidthRefs.current[currentTabIndex];
 
     scrollLeftRef.current = tabOffsetLeftRefs.current[currentTabIndex];
 
@@ -279,11 +267,9 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
       nextTab, 
       direction, 
       relativeScroll, 
-      currentTabWidth, 
       scrollLeftRef, 
       currentTabIndex, 
       tabRefs,
-      tabClientWidthRefs
     });
 
     indicatorScaleXRef.current = scaleX;
@@ -296,18 +282,18 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
       tabIndicatorRef.current.style.transform = `${translateXCss} ${scaleXCss}`;
     });
 
-    if (previousTabRef.current !== currentTab) {
+    if (previousTab !== currentTab) {
       if (!skipSettingIndexRef.current && index !== currentTabIndex) {
         skipForcedScrollRef.current = true;
         setIndex(currentTabIndex);
       }
 
-      setTabIndicatorWidth(currentTabWidth);
+      setTabIndicatorWidth(currentTab.clientWidth);
     }
 
     previousRelativeScrollRef.current = relativeScroll;
 
-    if (previousTabRef.current !== currentTab) {
+    if (previousTab !== currentTab) {
       previousTabRef.current = currentTab;
     }
   }, [tabPanelsClientWidth, index]);
