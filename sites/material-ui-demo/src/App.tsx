@@ -5,8 +5,7 @@ import { Tabs, Tab, createMuiTheme } from "@material-ui/core";
 import { ThemeProvider } from "@material-ui/styles";
 import styled from "styled-components";
 import tabs from "./data";
-import useReactiveTabIndicator from 'react-tab-flow';
-import useWindowSize from "./useWindowSize";
+import { useReactiveTabIndicator, useWindowSize } from 'react-tab-flow';
 
 const Line = styled.div`
   height: 1rem;
@@ -170,8 +169,6 @@ function App() {
   const panelRefs = React.useRef([]);
   const tabRefs = React.useRef([]);
 
-  const [indexState, setIndexState] = React.useState(0);
-
   const {
     tabIndicatorWidth,
     index,
@@ -190,7 +187,7 @@ function App() {
   }, [width]);
 
   const onChange = (e, i) => {
-    setIndexState(i);
+    setIndex(i);
   };
 
   let tabIndicatorStyle = {
@@ -206,20 +203,6 @@ function App() {
     tabIndicatorStyle = { ...tabIndicatorStyle, width: tabIndicatorWidth };
   }
 
-  const onScrollListener = React.useCallback((e) => {
-    startAnimation(e.target.scrollLeft);
-  }, []);
-
-  React.useEffect(() => {
-    tabPanelsRef.current.addEventListener("scroll", onScrollListener, {
-      // passive: true
-    });
-
-    return () => {
-      tabPanelsRef.current.removeEventListener("scroll", onScrollListener);
-    };
-  }, []);
-
   const onChangeCallback = React.useCallback((e, val) => onChange(e, val), []);
 
   return (
@@ -228,7 +211,7 @@ function App() {
         <div>
           <Tabs
             action={tabsActionRef}
-            value={indexState}
+            value={index}
             variant="scrollable"
             TabIndicatorProps={{
               ref: tabIndicatorRef,

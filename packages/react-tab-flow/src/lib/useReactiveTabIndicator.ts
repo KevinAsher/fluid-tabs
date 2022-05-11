@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
 import useWindowSize from "./useWindowSize";
 import animateScrollTo from "animated-scroll-to";
 
@@ -11,42 +11,70 @@ function usePrevious(value) {
   return ref.current;
 }
 
+function calculateScaleX(nextTabWidth, currentTabWidth, currentTabScrollProgress) {
+  let scaleX;
+  const tabWidthRatio = nextTabWidth / currentTabWidth;
+
+  if (tabWidthRatio < 1) {
+    scaleX = 1 - currentTabScrollProgress * (1 - tabWidthRatio);
+  } else {
+    scaleX = 1 + currentTabScrollProgress * (tabWidthRatio - 1);
+  }
+
+  return scaleX;
+}
+
+/*
+  Only read the client width of the tab panels on initialization and
+  width update (most likely screen orientation change).
+*/
+function useTabPanelsClientWidth(tabPanelsRef) {
+  const [tabPanelsClientWidth, setTabPanelsClientWidth] = useState();
+  const { width } = useWindowSize();
+
+  useLayoutEffect(() => {
+    setTabPanelsClientWidth(tabPanelsRef.current.clientWidth);
+  }, [width]);
+
+  return tabPanelsClientWidth;
+}
+
 export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndicatorRef }) {
   const [tabIndicatorWidth, setTabIndicatorWidth] = useState(null);
-  const lastRelativeScroll = React.useRef(0);
+  const previousRelativeScrollRef = React.useRef(0);
   const indicatorXPositionRef = React.useRef(0);
   const indicatorXScaleRef = React.useRef(1);
   const [index, setIndex] = useState(0);
-  const lastTabRef = React.useRef(null);
+  const previousTabRef = React.useRef(null);
   const previousIndex = usePrevious(index);
   const scrollLeftRef = React.useRef(0);
   const skipSettingIndexRef = React.useRef(false);
   const skipForcedScrollRef = React.useRef(false);
-  const tabPanelsClientWidthRef = React.useRef();
+  const skipScrollAnimationRef = React.useRef(false);
+
+  const tabPanelsClientWidth = useTabPanelsClientWidth(tabPanelsRef);
+  const previousTabPanelsClientWidth = usePrevious(tabPanelsClientWidth);
   const tabClientWidthRefs = React.useRef();
   const tabOffsetLeftRefs = React.useRef();
   const rafActiveRef = React.useRef(false);
   const rafIdRef = React.useRef();
   const targetTranslateXRef = React.useRef();
   const targetScaleXRef = React.useRef();
-  const { width } = useWindowSize();
-
   React.useLayoutEffect(() => {
     setTabIndicatorWidth(tabRefs.current[index].clientWidth);
-    tabPanelsClientWidthRef.current = tabPanelsRef.current.clientWidth;
-
+    skipForcedScrollRef.current = true;
     tabClientWidthRefs.current = tabRefs.current.map((el) => el.clientWidth);
     tabOffsetLeftRefs.current = tabRefs.current.map((el) => el.offsetLeft);
-  }, [width]);
+  }, [tabPanelsClientWidth]);
+
 
   React.useEffect(() => {
-    console.log("onChange just ran", index);
 
     if (!skipForcedScrollRef.current) {
       skipSettingIndexRef.current = true;
 
       tabPanelsRef.current.style = "scroll-snap-type: none";
-      animateScrollTo([index * tabPanelsRef.current.clientWidth, 0], {
+      animateScrollTo([index * tabPanelsClientWidth, 0], {
         elementToScroll: tabPanelsRef.current,
         // minDuration: 350,
         // minDuration: 350,
@@ -65,18 +93,16 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
           // On ios, setting scroll-snap-type resets the scroll position
           // so we need to reajust it to where it was before.
           tabPanelsRef.current.scrollTo(
-            index * tabPanelsRef.current.clientWidth,
+            index * tabPanelsClientWidth,
             0
           );
         })
         .finally(() => { });
     } else {
-      console.log("animateScrollTo was skipped");
       skipForcedScrollRef.current = false;
     }
 
-    // console.log({ index });
-  }, [index]);
+  }, [index, tabPanelsClientWidth]);
 
   const onScrollChanged = () => {
     function updateAnimation(originTranslateX, originScaleX) {
@@ -93,35 +119,19 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
   };
 
   const startAnimation = React.useCallback((scroll) => {
-    const relativeScroll = scroll / tabPanelsClientWidthRef.current;
-
+    const relativeScroll = scroll / tabPanelsClientWidth;
+    console.log('teste')
     const RIGHT = "RIGHT";
     const LEFT = "LEFT";
 
-    function calculateScaleX(
-      nextTabWidth,
-      currentTabWidth,
-      currentTabScrollProgress
-    ) {
-      let scaleX;
-      const tabWidthRatio = nextTabWidth / currentTabWidth;
-
-      if (tabWidthRatio < 1) {
-        scaleX = 1 - currentTabScrollProgress * (1 - tabWidthRatio);
-      } else {
-        scaleX = 1 + currentTabScrollProgress * (tabWidthRatio - 1);
-      }
-
-      return scaleX;
-    }
 
     const direction =
-      lastRelativeScroll.current < relativeScroll ? RIGHT : LEFT;
+      previousRelativeScrollRef.current < relativeScroll ? RIGHT : LEFT;
 
     let currentTab = null;
-    if (lastTabRef.current === null) {
+    if (previousTabRef.current === null) {
       currentTab = tabRefs.current[previousIndex || 0];
-      lastTabRef.current = currentTab;
+      previousTabRef.current = currentTab;
     }
 
     if (direction === RIGHT) {
@@ -133,14 +143,14 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
        *                        ^ ^
        *                        ^ ^
        *   _____________________^ ^________________________
-       *   Last Relative scroll    Current Relative scroll
+       *   Previous Relative scroll    Current Relative scroll
        *
        *   Valid Previous currentTab:
        *   - T1 (Scrolling left to right)
        *   - T2 (Was already on T2, scrolled left a bit, then scrolled right again)
        */
 
-      if (Math.trunc(relativeScroll) > Math.trunc(lastRelativeScroll.current)) {
+      if (Math.trunc(relativeScroll) > Math.trunc(previousRelativeScrollRef.current)) {
         currentTab = tabRefs.current[Math.trunc(relativeScroll)];
       } else {
         /**
@@ -151,7 +161,7 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
          *                        ^ ^
          *                        ^ ^
          *   _____________________^ ^________________________
-         *   Last Relative scroll    Current Relative scroll
+         *   Previous Relative scroll    Current Relative scroll
          *
          *   Valid Previous currentTab:
          *   - T2 (Already on T2 and scrolling left to right)
@@ -159,7 +169,7 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
          */
 
         // don't do anything on this case because is not on a switching point
-        currentTab = lastTabRef.current;
+        currentTab = previousTabRef.current;
       }
     } else if (direction === LEFT) {
       // being very explicit for readability
@@ -172,7 +182,7 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
        *                           ^ ^
        *                           ^ ^
        *   ________________________^ ^________________________
-       *   Current Relative scroll    Last Relative scroll
+       *   Current Relative scroll    Previous Relative scroll
        *
        *   Valid Previous currentTab:
        *   - T2 (was already on T2 scrolling right to left)
@@ -180,10 +190,10 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
        */
 
       if (
-        Math.trunc(relativeScroll) < Math.trunc(lastRelativeScroll.current) ||
+        Math.trunc(relativeScroll) < Math.trunc(previousRelativeScrollRef.current) ||
         relativeScroll % 1 === 0
       ) {
-        currentTab = tabRefs.current[Math.trunc(lastRelativeScroll.current)];
+        currentTab = tabRefs.current[Math.trunc(previousRelativeScrollRef.current)];
       } else {
         /**
          *   Scroll Direction <--
@@ -192,7 +202,7 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
          *                           ^ ----------
          *                           ^ ^
          *   ________________________^ ^________________________
-         *   Current Relative scroll    Last Relative scroll
+         *   Current Relative scroll    Previous Relative scroll
          *
          *   Valid Previous currentTab:
          *   - T2 (was already on T2 scrolling left to right, and then right to left)
@@ -200,12 +210,12 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
          */
 
         // don't do anything on this case because is not on a switching point
-        currentTab = lastTabRef.current;
+        currentTab = previousTabRef.current;
       }
     }
 
     if (!currentTab) {
-      alert("Unhandled case for currentTab!");
+      throw new Error("Unhandled case for currentTab!");
     }
 
     const currentTabIndex = tabRefs.current.findIndex(
@@ -229,7 +239,7 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
 
     if (
       currentTab !== nextTabFromScrollDirection ||
-      lastTabRef.current !== currentTab
+      previousTabRef.current !== currentTab
     ) {
       currentTabScrollProgress =
         direction === RIGHT ? relativeScroll % 1 : 1 - (relativeScroll % 1);
@@ -294,15 +304,14 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
     indicatorXScaleRef.current = targetScaleXRef.current;
     indicatorXPositionRef.current = targetTranslateXRef.current;
 
-    // console.log({
-    //   transform: tabIndicatorRef.current.style.transform,
+    // console.log({ //   transform: tabIndicatorRef.current.style.transform,
     //   currentTab: currentTab.textContent,
-    //   lastTabRef: lastTabRef.current.textContent
+    //   previousTabRef: previousTabRef.current.textContent
     // });
-    if (lastTabRef.current !== currentTab) {
+    if (previousTabRef.current !== currentTab) {
       if (!skipSettingIndexRef.current && index !== currentTabIndex) {
         // console.log("setting index from scroll to", currentTabIndex);
-          skipForcedScrollRef.current = true;
+        skipForcedScrollRef.current = true;
         setIndex(currentTabIndex);
       }
       // console.log("setting tab indicator width to", currentTabWidth);
@@ -313,12 +322,24 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
       // tabIndicatorRef.current.style.transform = `${translateXCss} scaleX(1)`;
     }
 
-    lastRelativeScroll.current = relativeScroll;
+    previousRelativeScrollRef.current = relativeScroll;
 
-    if (lastTabRef.current !== currentTab) {
-      lastTabRef.current = currentTab;
+    if (previousTabRef.current !== currentTab) {
+      previousTabRef.current = currentTab;
     }
-  }, []);
+  }, [tabPanelsClientWidth, index]);
+
+  const onScrollListener = React.useCallback((e) => {
+    startAnimation(e.target.scrollLeft);
+  }, [startAnimation]);
+
+  React.useEffect(() => {
+    tabPanelsRef.current.addEventListener("scroll", onScrollListener);
+
+    return () => {
+      tabPanelsRef.current.removeEventListener("scroll", onScrollListener);
+    };
+  }, [onScrollListener]);
 
   return { tabIndicatorWidth, index, setIndex, startAnimation };
 }

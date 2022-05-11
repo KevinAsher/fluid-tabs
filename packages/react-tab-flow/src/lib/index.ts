@@ -1,4 +1,2 @@
-import useReactiveTabIndicator from './useReactiveTabIndicator';
-import useWindowSize from './useWindowSize';
-export default useReactiveTabIndicator;
-
+export { default as useReactiveTabIndicator } from './useReactiveTabIndicator';
+export { default as useWindowSize } from './useWindowSize';

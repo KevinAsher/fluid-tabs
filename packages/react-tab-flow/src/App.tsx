@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import logo from './logo.svg'
 import './App.css'
-import useReactiveTabIndicator from './lib'
+import { useReactiveTabIndicator } from './lib'
 
 function App() {
   const [count, setCount] = useState(0)
