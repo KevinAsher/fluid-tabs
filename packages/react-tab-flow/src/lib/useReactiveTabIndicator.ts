@@ -28,7 +28,7 @@ function calculateScaleX(nextTabWidth, currentTabWidth, currentTabScrollProgress
   return scaleX;
 }
 
-function calculateTransform({currentTab, previousTab, nextTab, direction, relativeScroll, currentTabWidth, scrollLeftRef, currentTabIndex, tabRefs}) {
+function calculateTransform({currentTab, previousTab, nextTab, direction, relativeScroll, currentTabWidth, scrollLeftRef, currentTabIndex, tabRefs, tabClientWidthRefs}) {
     let currentTabScrollProgress;
     let scaleX;
     let translateX;
@@ -50,6 +50,7 @@ function calculateTransform({currentTab, previousTab, nextTab, direction, relati
       currentTabScrollProgress = direction === RIGHT ? 1 - (relativeScroll % 1 || 1) : relativeScroll % 1;
 
       let wasGonnaBeNextTabIndex;
+      let wasGonnaBeNextTab;
       if (direction === LEFT) {
         wasGonnaBeNextTabIndex = currentTabIndex + 1;
         wasGonnaBeNextTab = tabRefs.current[wasGonnaBeNextTabIndex];
@@ -251,21 +252,12 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
 
   }, [index, tabPanelsClientWidth]);
 
-  const onScrollChanged = () => {
-    rafActiveRef.current = false;
-
-    const scaleXCss = `scaleX(${indicatorScaleXRef.current})`;
-    const translateXCss = `translateX(${indicatorTranslateXRef.current}px)`;
-
-    tabIndicatorRef.current.style.transform = `${translateXCss} ${scaleXCss}`;
+  const onScrollChanged = (scaleX, scaleY) => {
   };
 
   const startAnimation = React.useCallback((scroll) => {
     const relativeScroll = scroll / tabPanelsClientWidth;
-
-
     const direction = previousRelativeScrollRef.current < relativeScroll ? RIGHT : LEFT;
-
 
     let {previousTab, currentTab, nextTab} = getWorkingTabs({
       previousTabRef,
@@ -290,16 +282,19 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
       currentTabWidth, 
       scrollLeftRef, 
       currentTabIndex, 
-      tabRefs
+      tabRefs,
+      tabClientWidthRefs
     });
 
     indicatorScaleXRef.current = scaleX;
     indicatorTranslateXRef.current = translateX;
-    if (!rafActiveRef.current) {
-      rafActiveRef.current = true;
-      rafIdRef.current = requestAnimationFrame(() => onScrollChanged());
-    }
+    
+    requestAnimationFrame(() => {
+      const scaleXCss = `scaleX(${indicatorScaleXRef.current})`;
+      const translateXCss = `translateX(${indicatorTranslateXRef.current}px)`;
 
+      tabIndicatorRef.current.style.transform = `${translateXCss} ${scaleXCss}`;
+    });
 
     if (previousTabRef.current !== currentTab) {
       if (!skipSettingIndexRef.current && index !== currentTabIndex) {
