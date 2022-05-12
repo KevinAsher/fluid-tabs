@@ -96,63 +96,29 @@ const theme = createMuiTheme({
 const StyledTabPanelContent = React.memo(({ img, title }) => {
   return (
     <StyledContent>
-      <img src={img} alt="landscape" draggable="false" />
-      <ContentContainer>
-        <h1>{title}</h1>
-        <div style={{ marginBottom: "1.25rem" }}>
-          {[...new Array(4).keys()].map((i) => {
-            return <Line width={i === 3 ? "50%" : "100%"} />;
-          })}
+      {[0,1,2].map(key => 
+        <div key={key}>
+          <img src={img} alt="landscape" draggable="false" />
+          <ContentContainer>
+            <h1>{title}</h1>
+            <div style={{ marginBottom: "1.25rem" }}>
+              {[...new Array(4).keys()].map((i) => {
+                return <Line width={i === 3 ? "50%" : "100%"} key={i} />;
+              })}
+            </div>
+            <div style={{ marginBottom: "1.25rem" }}>
+              {[...new Array(3).keys()].map((i) => {
+                return <Line width={i === 2 ? "33%" : "100%"} key={i} />;
+              })}
+            </div>
+            <div>
+              {[...new Array(2).keys()].map((i) => {
+                return <Line width={i === 1 ? "80%" : "100%"} key={i} />;
+              })}
+            </div>
+          </ContentContainer>
         </div>
-        <div style={{ marginBottom: "1.25rem" }}>
-          {[...new Array(3).keys()].map((i) => {
-            return <Line width={i === 2 ? "33%" : "100%"} />;
-          })}
-        </div>
-        <div>
-          {[...new Array(2).keys()].map((i) => {
-            return <Line width={i === 1 ? "80%" : "100%"} />;
-          })}
-        </div>
-      </ContentContainer>
-      <img src={img} alt="landscape" draggable="false" />
-      <ContentContainer>
-        <h1>{title}</h1>
-        <div style={{ marginBottom: "1.25rem" }}>
-          {[...new Array(4).keys()].map((i) => {
-            return <Line width={i === 3 ? "50%" : "100%"} />;
-          })}
-        </div>
-        <div style={{ marginBottom: "1.25rem" }}>
-          {[...new Array(3).keys()].map((i) => {
-            return <Line width={i === 2 ? "33%" : "100%"} />;
-          })}
-        </div>
-        <div>
-          {[...new Array(2).keys()].map((i) => {
-            return <Line width={i === 1 ? "80%" : "100%"} />;
-          })}
-        </div>
-      </ContentContainer>
-      <img src={img} alt="landscape" draggable="false" />
-      <ContentContainer>
-        <h1>{title}</h1>
-        <div style={{ marginBottom: "1.25rem" }}>
-          {[...new Array(4).keys()].map((i) => {
-            return <Line width={i === 3 ? "50%" : "100%"} />;
-          })}
-        </div>
-        <div style={{ marginBottom: "1.25rem" }}>
-          {[...new Array(3).keys()].map((i) => {
-            return <Line width={i === 2 ? "33%" : "100%"} />;
-          })}
-        </div>
-        <div>
-          {[...new Array(2).keys()].map((i) => {
-            return <Line width={i === 1 ? "80%" : "100%"} />;
-          })}
-        </div>
-      </ContentContainer>
+      )}
     </StyledContent>
   );
 });
@@ -166,14 +132,12 @@ function App() {
 
 
   const arrLength = tabs.length;
-  const panelRefs = React.useRef([]);
   const tabRefs = React.useRef([]);
 
   const {
     tabIndicatorWidth,
     index,
-    setIndex,
-    startAnimation
+    setIndex
   } = useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndicatorRef });
 
   const addToRefs = (arrRefs) => (el) => {
@@ -220,21 +184,15 @@ function App() {
             onChange={onChangeCallback}
           >
             {tabs.map(({ img, title }, i) => (
-              <Tab label={title} ref={addToRefs(tabRefs)} />
+              <Tab label={title} ref={addToRefs(tabRefs)} key={i} />
             ))}
           </Tabs>
           <StyledTabPanels
             ref={tabPanelsRef}
-          // onScroll={(e) => {
-          //   // const t0 = performance.now();
-          //   startAnimation(e.target.scrollLeft);
-          //   // const t1 = performance.now();
-          //   // console.log(`onScrollChanged took ${t1 - t0}ms`);
-          // }}
           >
             {tabs.map(({ img, title }, i) => {
               return (
-                <StyledTabPanel ref={addToRefs(panelRefs)} key={i}>
+                <StyledTabPanel key={i}>
                   <StyledTabPanelContent img={img} title={title} />
                 </StyledTabPanel>
               );
