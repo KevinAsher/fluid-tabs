@@ -1,6 +1,5 @@
 // @ts-nocheck
 import React, { useState, useRef } from "react";
-import ReactDOM from "react-dom";
 import { Tabs, Tab, createMuiTheme } from "@material-ui/core";
 import { ThemeProvider } from "@material-ui/styles";
 import styled from "styled-components";
@@ -59,29 +58,6 @@ const StyledContent = styled.div`
   }
 `;
 
-const styles = {
-  tabs: {
-    background: "#fff"
-  },
-  slide: {
-    padding: 15,
-    minHeight: 100,
-    color: "#fff"
-  },
-  slide1: {
-    backgroundColor: "#FEA900"
-  },
-  slide2: {
-    backgroundColor: "#B3DC4A"
-  },
-  slide3: {
-    backgroundColor: "#6AC0FF"
-  },
-  slide4: {
-    backgroundColor: "#e980ff"
-  }
-};
-
 const theme = createMuiTheme({
   palette: {
     primary: {
@@ -125,13 +101,7 @@ const StyledTabPanelContent = React.memo(({ img, title }) => {
 
 function App() {
   const tabPanelsRef = React.useRef(null);
-  const tabPanelsScrollWidthRef = React.useRef(null);
   const tabIndicatorRef = React.useRef(null);
-  const { width } = useWindowSize();
-  const tabsActionRef = React.useRef(null);
-
-
-  const arrLength = tabs.length;
   const tabRefs = React.useRef([]);
 
   const {
@@ -139,81 +109,47 @@ function App() {
     index,
     setIndex
   } = useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndicatorRef });
-
   const addToRefs = (arrRefs) => (el) => {
     if (el && !arrRefs.current.includes(el)) {
       arrRefs.current.push(el);
     }
   };
 
-  React.useEffect(() => {
-    tabPanelsScrollWidthRef.current = tabPanelsRef.current.scrollWidth;
-  }, [width]);
-
-  const onChange = (e, i) => {
-    setIndex(i);
-  };
-
   let tabIndicatorStyle = {
     left: 0,
     transition: "none",
-
-    // transition: "translate 0.15s ease-in",
+    width: tabIndicatorWidth,
     willChange: "transform, width",
     transformOrigin: "left 50% 0"
   };
 
-  if (tabIndicatorWidth) {
-    tabIndicatorStyle = { ...tabIndicatorStyle, width: tabIndicatorWidth };
-  }
-
-  const onChangeCallback = React.useCallback((e, val) => onChange(e, val), []);
-
   return (
     <ThemeProvider theme={theme}>
       <div className="App">
-        <div>
-          <Tabs
-            action={tabsActionRef}
-            value={index}
-            variant="scrollable"
-            TabIndicatorProps={{
-              ref: tabIndicatorRef,
-              style: tabIndicatorStyle
-            }}
-            onChange={onChangeCallback}
-          >
-            {tabs.map(({ img, title }, i) => (
-              <Tab label={title} ref={addToRefs(tabRefs)} key={i} />
-            ))}
-          </Tabs>
-          <StyledTabPanels
-            ref={tabPanelsRef}
-          >
-            {tabs.map(({ img, title }, i) => {
-              return (
-                <StyledTabPanel key={i}>
-                  <StyledTabPanelContent img={img} title={title} />
-                </StyledTabPanel>
-              );
-            })}
-          </StyledTabPanels>
-          {/* <SwipeableViews
-            enableMouseEvents
-            index={index}
-            onSwitching={(i, type) => {
-              setFineIndex(i);
-              if (type === "end") {
-                onChange(i);
-              }
-            }}
-          >
-            <div style={{ ...styles.slide, ...styles.slide1 }}>slide n°1</div>
-            <div style={{ ...styles.slide, ...styles.slide2 }}>slide n°2</div>
-            <div style={{ ...styles.slide, ...styles.slide3 }}>slide n°3</div>
-            <div style={{ ...styles.slide, ...styles.slide4 }}>slide n°4</div>
-          </SwipeableViews> */}
-        </div>
+        <Tabs
+          value={index}
+          variant="scrollable"
+          TabIndicatorProps={{
+            ref: tabIndicatorRef,
+            style: tabIndicatorStyle
+          }}
+          onChange={(e, val) => setIndex(val)}
+        >
+          {tabs.map(({ img, title }, i) => (
+            <Tab label={title} ref={addToRefs(tabRefs)} key={i} />
+          ))}
+        </Tabs>
+        <StyledTabPanels
+          ref={tabPanelsRef}
+        >
+          {tabs.map(({ img, title }, i) => {
+            return (
+              <StyledTabPanel key={i}>
+                <StyledTabPanelContent img={img} title={title} />
+              </StyledTabPanel>
+            );
+          })}
+        </StyledTabPanels>
       </div>
     </ThemeProvider>
   );
