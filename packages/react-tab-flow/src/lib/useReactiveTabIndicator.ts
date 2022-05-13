@@ -29,13 +29,13 @@ function calculateScaleX(nextTabWidth, currentTabWidth, currentTabScrollProgress
   return scaleX;
 }
 
-function calculateTransform({currentTab, previousTab, nextTab, direction, relativeScroll, scrollLeftRef, currentTabIndex, tabRefs}) {
+function calculateTransform({currentTab, previousTab, nextTab, direction, relativeScroll, currentTabIndex, tabRefs}) {
     let currentTabScrollProgress;
     let scaleX;
     let translateX;
     let nextTabWidth;
     let currentTabWidth = currentTab.clientWidth;
-    let scrollLeft = currentTab.offsetLeft || 0;
+    let offsetLeft = currentTab.offsetLeft || 0;
 
     if (currentTab !== nextTab || previousTab !== currentTab) {
       currentTabScrollProgress = direction === RIGHT ? relativeScroll % 1 : 1 - (relativeScroll % 1);
@@ -45,9 +45,9 @@ function calculateTransform({currentTab, previousTab, nextTab, direction, relati
       scaleX = calculateScaleX(nextTabWidth, currentTabWidth, currentTabScrollProgress);
 
       if (direction === RIGHT) {
-        translateX = scrollLeft + (relativeScroll % 1) * currentTabWidth;
+        translateX = offsetLeft + (relativeScroll % 1) * currentTabWidth;
       } else {
-        translateX = scrollLeft - (1 - (relativeScroll % 1 || 1)) * nextTabWidth;
+        translateX = offsetLeft - (1 - (relativeScroll % 1 || 1)) * nextTabWidth;
       }
     } else {
       currentTabScrollProgress = direction === RIGHT ? 1 - (relativeScroll % 1 || 1) : relativeScroll % 1;
@@ -66,9 +66,9 @@ function calculateTransform({currentTab, previousTab, nextTab, direction, relati
       scaleX = calculateScaleX(nextTabWidth, currentTabWidth, currentTabScrollProgress);
 
       if (direction === RIGHT) {
-        translateX = scrollLeft - currentTabScrollProgress * nextTabWidth;
+        translateX = offsetLeft - currentTabScrollProgress * nextTabWidth;
       } else {
-        translateX = scrollLeft + currentTabScrollProgress * currentTabWidth;
+        translateX = offsetLeft + currentTabScrollProgress * currentTabWidth;
       }
     }
 
@@ -198,7 +198,6 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
   const [index, setIndex] = useState(0);
   const previousTabRef = React.useRef(null);
   const previousIndex = usePrevious(index);
-  const scrollLeftRef = React.useRef(0);
   const skipSettingIndexRef = React.useRef(false);
   const skipForcedScrollRef = React.useRef(false);
   const tabPanelsClientWidth = useTabPanelsClientWidth(tabPanelsRef);
