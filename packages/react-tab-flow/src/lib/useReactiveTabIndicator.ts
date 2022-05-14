@@ -8,7 +8,7 @@ function usePrevious(value) {
   const ref = useRef();
   useEffect(() => {
     ref.current = value;
-  });
+  }, [value]);
   return ref.current;
 }
 
@@ -97,91 +97,26 @@ function getWorkingTabs({previousTabRef, previousIndex, tabRefs, direction, rela
     }
 
     if (direction === RIGHT) {
-
-      /**
-       *   Scroll Direction -->
-       *              |----T1----|----T2----|----T3----|
-       *                        ----------
-       *                        ^ ----------
-       *                        ^ ^
-       *                        ^ ^
-       *   _____________________^ ^________________________
-       *   Previous Relative scroll    Current Relative scroll
-       *
-       *   Valid Previous currentTab:
-       *   - T1 (Scrolling left to right)
-       *   - T2 (Was already on T2, scrolled left a bit, then scrolled right again)
-       */
-
       if (Math.trunc(relativeScroll) > Math.trunc(previousRelativeScrollRef.current)) {
         currentTab = tabRefs.current[Math.trunc(relativeScroll)];
       } else {
-        /**
-         *   Scroll Direction -->
-         *           |----T1----|----T2----|----T3----|
-         *                        ----------
-         *                        ^ ----------
-         *                        ^ ^
-         *                        ^ ^
-         *   _____________________^ ^________________________
-         *   Previous Relative scroll    Current Relative scroll
-         *
-         *   Valid Previous currentTab:
-         *   - T2 (Already on T2 and scrolling left to right)
-         *   - T3 (scrolling left to right from T3, and then right to lef)
-         */
-
-        // don't do anything on this case because is not on a switching point
         currentTab = previousTabRef.current;
       }
     } else if (direction === LEFT) {
-      // being very explicit for readability
-
-      /**
-       *   Scroll Direction <--
-       *                 |----T1----|----T2----|----T3----|
-       *                           ----------
-       *                           ^ ----------
-       *                           ^ ^
-       *                           ^ ^
-       *   ________________________^ ^________________________
-       *   Current Relative scroll    Previous Relative scroll
-       *
-       *   Valid Previous currentTab:
-       *   - T2 (was already on T2 scrolling right to left)
-       *   - T3 (scrolling right to left)
-       */
-
       if (
         Math.trunc(relativeScroll) < Math.trunc(previousRelativeScrollRef.current) ||
         relativeScroll % 1 === 0
       ) {
         currentTab = tabRefs.current[Math.trunc(previousRelativeScrollRef.current)];
       } else {
-        /**
-         *   Scroll Direction <--
-         *              |----T1----|----T2----|----T3----|
-         *                           ----------
-         *                           ^ ----------
-         *                           ^ ^
-         *   ________________________^ ^________________________
-         *   Current Relative scroll    Previous Relative scroll
-         *
-         *   Valid Previous currentTab:
-         *   - T2 (was already on T2 scrolling left to right, and then right to left)
-         *   - T3 (scrolling left to right)
-         */
-
-        // don't do anything on this case because is not on a switching point
         currentTab = previousTabRef.current;
       }
     }
 
 
-    let nextTab =
-      direction === RIGHT
-        ? tabRefs.current[Math.ceil(relativeScroll)]
-        : tabRefs.current[Math.floor(relativeScroll)];
+    let nextTab = direction === RIGHT
+      ? tabRefs.current[Math.ceil(relativeScroll)]
+      : tabRefs.current[Math.floor(relativeScroll)];
 
     if (!currentTab) {
       throw new Error("Unhandled case for currentTab!");
@@ -189,12 +124,12 @@ function getWorkingTabs({previousTabRef, previousIndex, tabRefs, direction, rela
   return { previousTab: previousTabRef.current, currentTab, nextTab}
 }
 
-export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndicatorRef }) {
+export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndicatorRef, defaultIndex=0 }) {
   const [tabIndicatorWidth, setTabIndicatorWidth] = useState(null);
   const previousRelativeScrollRef = useRef(0);
   const indicatorTranslateXRef = useRef(0);
   const indicatorScaleXRef = useRef(1);
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(defaultIndex);
   const previousTabRef = useRef(null);
   const previousIndex = usePrevious(index);
   const skipSettingIndexRef = useRef(false);
@@ -206,6 +141,13 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
     skipForcedScrollRef.current = true;
   }, [tabPanelsClientWidth]);
 
+
+  useLayoutEffect(() => {
+    if (index === defaultIndex && tabIndicatorRef.current) {
+      tabPanelsRef.current.scrollLeft = index * tabPanelsClientWidth;
+    }
+  }, [tabPanelsClientWidth, tabIndicatorRef.current])
+
   useEffect(() => {
 
     if (!skipForcedScrollRef.current) {
@@ -214,8 +156,8 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
       tabPanelsRef.current.style = "scroll-snap-type: none";
       animateScrollTo([index * tabPanelsClientWidth, 0], {
         elementToScroll: tabPanelsRef.current,
-        minDuration: 2350,
-        // maxDuration: 300,
+        // minDuration: 2350,
+        maxDuration: 300,
 
         // acceleration until halfway, then deceleration
         easing: (t) => {

@@ -108,7 +108,7 @@ function App() {
     tabIndicatorWidth,
     index,
     setIndex
-  } = useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndicatorRef });
+  } = useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndicatorRef, defaultIndex: 1});
   const addToRefs = (arrRefs) => (el) => {
     if (el && !arrRefs.current.includes(el)) {
       arrRefs.current.push(el);
