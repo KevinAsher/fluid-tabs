@@ -1,7 +1,9 @@
 // @ts-nocheck
 import React, { useState, useRef } from "react";
-import { Tabs, Tab, createMuiTheme } from "@material-ui/core";
-import { ThemeProvider } from "@material-ui/styles";
+// import { Tabs, Tab, createMuiTheme } from "@material-ui/core";
+import { Tabs, Tab, createMuiTheme } from "@mui/material";
+// import { ThemeProvider } from "@material-ui/styles";
+import { ThemeProvider } from "@mui/material/styles";
 import styled from "styled-components";
 import tabs from "./data";
 import { useReactiveTabIndicator, useWindowSize } from 'react-tab-flow';
@@ -118,7 +120,6 @@ function App() {
   let tabIndicatorStyle = {
     left: 0,
     transition: "none",
-    width: tabIndicatorWidth,
     willChange: "transform, width",
     transformOrigin: "left 50% 0"
   };

@@ -13,6 +13,25 @@ function usePrevious(value) {
 }
 
 
+function scrollPromise(element, options) {
+  return new Promise((resolve, reject) => {
+
+      element.parentElement.scroll(options);
+      const intersectionObserver = new IntersectionObserver((entries) => {
+        let [entry] = entries;
+        
+        if (entry.isIntersecting) {
+        
+          intersectionObserver.unobserve(element);
+          resolve();
+        }
+      }, {root: element.parentElement, threshold: 1.0 });
+      
+      // I start to observe the element where I scrolled 
+      intersectionObserver.observe(element);
+  })
+}
+
 const RIGHT = "RIGHT";
 const LEFT = "LEFT";
 
@@ -137,10 +156,9 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
   const tabPanelsClientWidth = useTabPanelsClientWidth(tabPanelsRef);
 
   useLayoutEffect(() => {
-    setTabIndicatorWidth(tabRefs.current[index].clientWidth);
+    tabIndicatorRef.current.style.width = tabRefs.current[index].clientWidth;
     skipForcedScrollRef.current = true;
   }, [tabPanelsClientWidth]);
-
 
   useLayoutEffect(() => {
     if (index === defaultIndex && tabIndicatorRef.current) {
@@ -152,35 +170,14 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
 
     if (!skipForcedScrollRef.current) {
       skipSettingIndexRef.current = true;
-
-      tabPanelsRef.current.style = "scroll-snap-type: none";
-      animateScrollTo([index * tabPanelsClientWidth, 0], {
-        elementToScroll: tabPanelsRef.current,
-        // minDuration: 2350,
-        maxDuration: 300,
-
-        // acceleration until halfway, then deceleration
-        easing: (t) => {
-          return --t * t * t + 1;
-        }
-      })
-        .then(() => {
+      const scrollOptions = {left: index * tabPanelsClientWidth, behavior: "smooth"} ;
+      scrollPromise(tabPanelsRef.current.children[index], scrollOptions).then(() => {
           skipSettingIndexRef.current = false;
+      });
 
-          tabPanelsRef.current.style = "scroll-snap-type: x mandatory";
-
-          // On ios, setting scroll-snap-type resets the scroll position
-          // so we need to reajust it to where it was before.
-          tabPanelsRef.current.scrollTo(
-            index * tabPanelsClientWidth,
-            0
-          );
-        })
-        .finally(() => { });
     } else {
       skipForcedScrollRef.current = false;
     }
-
   }, [index, tabPanelsClientWidth]);
 
   const onScroll = React.useCallback((e) => {
@@ -225,13 +222,11 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
         } else {
           setIndex(currentTabIndex);
         }
-      }
 
-      if (ReactDOM.flushSync) {
-        ReactDOM.flushSync(() => setTabIndicatorWidth(currentTab.clientWidth));
-      } else {
-        setTabIndicatorWidth(currentTab.clientWidth);
+        tabIndicatorRef.current.style.width = currentTab.clientWidth + 'px';
       }
+      
+      // tabIndicatorRef.current.style.width = currentTab.clientWidth;
     }
 
     previousRelativeScrollRef.current = relativeScroll;
