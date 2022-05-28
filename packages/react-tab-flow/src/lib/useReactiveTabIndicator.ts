@@ -108,38 +108,37 @@ function useTabPanelsClientWidth(tabPanelsRef) {
 }
 
 function getWorkingTabs({previousTabRef, previousIndex, tabRefs, direction, relativeScroll, previousRelativeScrollRef}) {
-  
-    let currentTab = null;
-    if (previousTabRef.current === null) {
-      currentTab = tabRefs.current[previousIndex || 0];
-      previousTabRef.current = currentTab;
+  let currentTab = null;
+  if (previousTabRef.current === null) {
+    currentTab = tabRefs.current[previousIndex || 0];
+    previousTabRef.current = currentTab;
+  }
+
+  if (direction === RIGHT) {
+    if (Math.trunc(relativeScroll) > Math.trunc(previousRelativeScrollRef.current)) {
+      currentTab = tabRefs.current[Math.trunc(relativeScroll)];
+    } else {
+      currentTab = previousTabRef.current;
     }
-
-    if (direction === RIGHT) {
-      if (Math.trunc(relativeScroll) > Math.trunc(previousRelativeScrollRef.current)) {
-        currentTab = tabRefs.current[Math.trunc(relativeScroll)];
-      } else {
-        currentTab = previousTabRef.current;
-      }
-    } else if (direction === LEFT) {
-      if (
-        Math.trunc(relativeScroll) < Math.trunc(previousRelativeScrollRef.current) ||
-        relativeScroll % 1 === 0
-      ) {
-        currentTab = tabRefs.current[Math.trunc(previousRelativeScrollRef.current)];
-      } else {
-        currentTab = previousTabRef.current;
-      }
+  } else if (direction === LEFT) {
+    if (
+      Math.trunc(relativeScroll) < Math.trunc(previousRelativeScrollRef.current) ||
+      relativeScroll % 1 === 0
+    ) {
+      currentTab = tabRefs.current[Math.trunc(previousRelativeScrollRef.current)];
+    } else {
+      currentTab = previousTabRef.current;
     }
+  }
 
 
-    let nextTab = direction === RIGHT
-      ? tabRefs.current[Math.ceil(relativeScroll)]
-      : tabRefs.current[Math.floor(relativeScroll)];
+  let nextTab = direction === RIGHT
+    ? tabRefs.current[Math.ceil(relativeScroll)]
+    : tabRefs.current[Math.floor(relativeScroll)];
 
-    if (!currentTab) {
-      throw new Error("Unhandled case for currentTab!");
-    }
+  if (!currentTab) {
+    throw new Error("Unhandled case for currentTab!");
+  }
   return { previousTab: previousTabRef.current, currentTab, nextTab}
 }
 
@@ -156,7 +155,8 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
   const tabPanelsClientWidth = useTabPanelsClientWidth(tabPanelsRef);
 
   useLayoutEffect(() => {
-    tabIndicatorRef.current.style.width = tabRefs.current[index].clientWidth;
+    setTabIndicatorWidth(tabRefs.current[index].clientWidth);
+    tabIndicatorRef.current.style.width = tabRefs.current[index].clientWidth + 'px';
     skipForcedScrollRef.current = true;
   }, [tabPanelsClientWidth]);
 
@@ -219,14 +219,14 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
         
         if (ReactDOM.flushSync) {
           ReactDOM.flushSync(() => setIndex(currentTabIndex));
+          ReactDOM.flushSync(() => setTabIndicatorWidth(currentTab.clientWidth));
         } else {
           setIndex(currentTabIndex);
+          setTabIndicatorWidth(currentTab.clientWidth);
         }
 
-        tabIndicatorRef.current.style.width = currentTab.clientWidth + 'px';
+        //tabIndicatorRef.current.style.width = currentTab.clientWidth + 'px';
       }
-      
-      // tabIndicatorRef.current.style.width = currentTab.clientWidth;
     }
 
     previousRelativeScrollRef.current = relativeScroll;

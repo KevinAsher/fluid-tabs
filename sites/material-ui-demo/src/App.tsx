@@ -119,6 +119,7 @@ function App() {
 
   let tabIndicatorStyle = {
     left: 0,
+    width: tabIndicatorWidth,
     transition: "none",
     willChange: "transform, width",
     transformOrigin: "left 50% 0"
