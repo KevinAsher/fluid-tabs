@@ -214,19 +214,30 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
     });
 
     if (previousTab !== currentTab) {
+      console.log(currentTab.clientWidth)
       if (!skipSettingIndexRef.current && index !== currentTabIndex) {
         skipForcedScrollRef.current = true;
         
         if (ReactDOM.flushSync) {
           ReactDOM.flushSync(() => setIndex(currentTabIndex));
-          ReactDOM.flushSync(() => setTabIndicatorWidth(currentTab.clientWidth));
         } else {
           setIndex(currentTabIndex);
-          setTabIndicatorWidth(currentTab.clientWidth);
         }
-
+        
         //tabIndicatorRef.current.style.width = currentTab.clientWidth + 'px';
       }
+
+
+      // if (skipSettingIndexRef.current && index !== currentTabIndex) {
+      //   // if (tabIndicatorRef.current.clientWidth !== currentTab.clientWidth)
+      //     // tabIndicatorRef.current.style.width = currentTab.clientWidth + 'px';
+      // } else {
+      //   if (ReactDOM.flushSync) {
+      //     ReactDOM.flushSync(() => setTabIndicatorWidth(currentTab.clientWidth));
+      //   } else {
+      //     setTabIndicatorWidth(currentTab.clientWidth);
+      //   }
+      // }
     }
 
     previousRelativeScrollRef.current = relativeScroll;

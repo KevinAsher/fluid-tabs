@@ -111,11 +111,11 @@ function App() {
     index,
     setIndex
   } = useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndicatorRef, defaultIndex: 1});
-  const addToRefs = (arrRefs) => (el) => {
-    if (el && !arrRefs.current.includes(el)) {
-      arrRefs.current.push(el);
+  const addToRefs = React.useCallback(el => {
+    if (el && !tabRefs.current.includes(el)) {
+      tabRefs.current.push(el);
     }
-  };
+  }, [tabRefs]);
 
   let tabIndicatorStyle = {
     left: 0,
@@ -125,21 +125,24 @@ function App() {
     transformOrigin: "left 50% 0"
   };
 
+  let tabIndicatorProps = React.useMemo(() => ({
+    ref: tabIndicatorRef,
+    style: tabIndicatorStyle
+  }), [tabIndicatorWidth]);
+
   return (
     <ThemeProvider theme={theme}>
       <div className="App">
         <Tabs
           value={index}
           variant="scrollable"
-          TabIndicatorProps={{
-            ref: tabIndicatorRef,
-            style: tabIndicatorStyle
-          }}
+          TabIndicatorProps={tabIndicatorProps}
           onChange={(e, val) => setIndex(val)}
         >
-          {tabs.map(({ img, title }, i) => (
-            <Tab label={title} ref={addToRefs(tabRefs)} key={i} />
-          ))}
+            <Tab label="Tranquil Forrest" ref={addToRefs} key="1" />
+            <Tab label="P" ref={addToRefs} key="2" />
+            <Tab label="Vibrant Beach" ref={addToRefs} key="3" />
+            <Tab label="Hidden Waterfall" ref={addToRefs} key="4" />
         </Tabs>
         <StyledTabPanels
           ref={tabPanelsRef}
