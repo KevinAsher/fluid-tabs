@@ -35,6 +35,11 @@ function scrollPromise(element, options) {
 const RIGHT = "RIGHT";
 const LEFT = "LEFT";
 
+window.onerror = function(msg, url, linenumber) {
+    alert('Error message: '+msg+'\nURL: '+url+'\nLine Number: '+linenumber);
+    return true;
+}
+
 function calculateScaleX(nextTabWidth, currentTabWidth, currentTabScrollProgress) {
   let scaleX;
   const tabWidthRatio = nextTabWidth / currentTabWidth;
@@ -72,9 +77,9 @@ function calculateTransform({currentTab, previousTab, nextTab, direction, relati
       let wasGonnaBeNextTabIndex;
       let wasGonnaBeNextTab;
       if (direction === LEFT) {
-        wasGonnaBeNextTabIndex = currentTabIndex + 1;
+        wasGonnaBeNextTabIndex = clamp(currentTabIndex + 1, 0, tabRefs.current.length-1);
       } else {
-        wasGonnaBeNextTabIndex = currentTabIndex - 1;
+        wasGonnaBeNextTabIndex = clamp(currentTabIndex - 1, 0, tabRefs.current.length-1);
       }
 
       wasGonnaBeNextTab = tabRefs.current[wasGonnaBeNextTabIndex];
@@ -107,6 +112,16 @@ function useTabPanelsClientWidth(tabPanelsRef) {
   return tabPanelsClientWidth;
 }
 
+// inspired from:
+// https://stackoverflow.com/questions/11832914/how-to-round-to-at-most-2-decimal-places-if-necessary
+function roundDecimal(num, places) {
+  return Math.round((num + Number.EPSILON) * 10**places) / 10**places;
+}
+
+function clamp(number, min, max) {
+  return Math.max(min, Math.min(number, max));
+} 
+
 function getWorkingTabs({previousTabRef, previousIndex, tabRefs, direction, relativeScroll, previousRelativeScrollRef}) {
   let currentTab = null;
   if (previousTabRef.current === null) {
@@ -131,14 +146,10 @@ function getWorkingTabs({previousTabRef, previousIndex, tabRefs, direction, rela
     }
   }
 
-
   let nextTab = direction === RIGHT
     ? tabRefs.current[Math.ceil(relativeScroll)]
     : tabRefs.current[Math.floor(relativeScroll)];
-
-  if (!currentTab) {
-    throw new Error("Unhandled case for currentTab!");
-  }
+  
   return { previousTab: previousTabRef.current, currentTab, nextTab}
 }
 
@@ -150,14 +161,15 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
   const [index, setIndex] = useState(defaultIndex);
   const previousTabRef = useRef(null);
   const previousIndex = usePrevious(index);
-  const skipSettingIndexRef = useRef(false);
-  const skipForcedScrollRef = useRef(false);
+  const shouldSkipSettingIndexRef = useRef(false);
+  const shouldSkipForcedScrollRef = useRef(false);
   const tabPanelsClientWidth = useTabPanelsClientWidth(tabPanelsRef);
+  const scrollClampBoundariesRef = useRef({left: null, right: null});
 
   useLayoutEffect(() => {
     setTabIndicatorWidth(tabRefs.current[index].clientWidth);
-    tabIndicatorRef.current.style.width = tabRefs.current[index].clientWidth + 'px';
-    skipForcedScrollRef.current = true;
+    // tabIndicatorRef.current.style.width = tabRefs.current[index].clientWidth + 'px';
+    shouldSkipForcedScrollRef.current = true;
   }, [tabPanelsClientWidth]);
 
   useLayoutEffect(() => {
@@ -168,21 +180,32 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
 
   useEffect(() => {
 
-    if (!skipForcedScrollRef.current) {
-      skipSettingIndexRef.current = true;
+    if (!shouldSkipForcedScrollRef.current) {
+      shouldSkipSettingIndexRef.current = true;
       const scrollOptions = {left: index * tabPanelsClientWidth, behavior: "smooth"} ;
       scrollPromise(tabPanelsRef.current.children[index], scrollOptions).then(() => {
-          skipSettingIndexRef.current = false;
+          shouldSkipSettingIndexRef.current = false;
       });
 
     } else {
-      skipForcedScrollRef.current = false;
+      shouldSkipForcedScrollRef.current = false;
     }
   }, [index, tabPanelsClientWidth]);
 
   const onScroll = React.useCallback((e) => {
-    const relativeScroll = e.target.scrollLeft / tabPanelsClientWidth;
+
+    const relativeScrollRaw = e.target.scrollLeft / tabPanelsClientWidth;
+    const relativeScroll = relativeScrollRaw % 1 < 0.01 ? Math.round(relativeScrollRaw) : relativeScrollRaw;
     const direction = previousRelativeScrollRef.current <= relativeScroll ? RIGHT : LEFT;
+
+
+    /*
+      currentTab floats from previousTab to currentTab when the previousTab and nextTab are adjacent,
+      also, currentTab has the value of previousTab until the last scroll callback, in which it becomes 
+      next tab. Otherwise, currentTab can have an intermediate tab value, but only for a single scroll callback, 
+      because the previous tab will get the value of the intermediate tab in the next scroll callback.
+    */
+    
     let {previousTab, currentTab, nextTab} = getWorkingTabs({
       previousTabRef,
       previousIndex,  
@@ -191,8 +214,9 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
       relativeScroll,
       previousRelativeScrollRef
     });
-    
+
     const currentTabIndex = tabRefs.current.findIndex(tab => tab === currentTab);
+
     let { translateX, scaleX } = calculateTransform({
       currentTab, 
       previousTab, 
@@ -213,38 +237,28 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
       tabIndicatorRef.current.style.transform = `${translateXCss} ${scaleXCss}`;
     });
 
-    if (previousTab !== currentTab) {
-      console.log(currentTab.clientWidth)
-      if (!skipSettingIndexRef.current && index !== currentTabIndex) {
-        skipForcedScrollRef.current = true;
-        
-        if (ReactDOM.flushSync) {
-          ReactDOM.flushSync(() => setIndex(currentTabIndex));
-        } else {
-          setIndex(currentTabIndex);
-        }
-        
-        //tabIndicatorRef.current.style.width = currentTab.clientWidth + 'px';
-      }
-
-
-      // if (skipSettingIndexRef.current && index !== currentTabIndex) {
-      //   // if (tabIndicatorRef.current.clientWidth !== currentTab.clientWidth)
-      //     // tabIndicatorRef.current.style.width = currentTab.clientWidth + 'px';
-      // } else {
-      //   if (ReactDOM.flushSync) {
-      //     ReactDOM.flushSync(() => setTabIndicatorWidth(currentTab.clientWidth));
-      //   } else {
-      //     setTabIndicatorWidth(currentTab.clientWidth);
-      //   }
-      // }
-    }
-
     previousRelativeScrollRef.current = relativeScroll;
 
-    if (previousTab !== currentTab) {
-      previousTabRef.current = currentTab;
+    if (previousTab === currentTab) return;
+    
+    previousTabRef.current = currentTab;
+
+    /* 
+      Update the tab indicator width outside React for performance reasons. This will
+      cause this element to be out of sync between react and the dom but it's a temporary out of sync.
+      This is only for when the indicator is passing by other elements until it reaches it's
+      destination tab. Once it reaches it, we re-sync the elements width with it's actual state.
+    */
+    tabIndicatorRef.current.style.width = currentTab.clientWidth + 'px';
+
+    if (index === currentTabIndex) {
+      setTabIndicatorWidth(currentTab.clientWidth);
+    } else if (!shouldSkipSettingIndexRef.current) {
+      shouldSkipForcedScrollRef.current = true;
+      setIndex(currentTabIndex);
+      setTabIndicatorWidth(currentTab.clientWidth);
     }
+    
   }, [tabPanelsClientWidth, index]);
 
   React.useLayoutEffect(() => {
