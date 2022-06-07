@@ -8,6 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "animate-scroll-to": "^1.0.0",
     "animated-scroll-to": "^2.2.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"

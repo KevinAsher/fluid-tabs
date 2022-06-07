@@ -35,11 +35,6 @@ function scrollPromise(element, options) {
 const RIGHT = "RIGHT";
 const LEFT = "LEFT";
 
-window.onerror = function(msg, url, linenumber) {
-    alert('Error message: '+msg+'\nURL: '+url+'\nLine Number: '+linenumber);
-    return true;
-}
-
 function calculateScaleX(nextTabWidth, currentTabWidth, currentTabScrollProgress) {
   let scaleX;
   const tabWidthRatio = nextTabWidth / currentTabWidth;
@@ -112,45 +107,51 @@ function useTabPanelsClientWidth(tabPanelsRef) {
   return tabPanelsClientWidth;
 }
 
-// inspired from:
-// https://stackoverflow.com/questions/11832914/how-to-round-to-at-most-2-decimal-places-if-necessary
-function roundDecimal(num, places) {
-  return Math.round((num + Number.EPSILON) * 10**places) / 10**places;
-}
-
 function clamp(number, min, max) {
   return Math.max(min, Math.min(number, max));
 } 
 
-function getWorkingTabs({previousTabRef, previousIndex, tabRefs, direction, relativeScroll, previousRelativeScrollRef}) {
+function getWorkingTabs({previousTab, previousIndex, tabRefs, direction, relativeScroll, previousRelativeScroll}) {
   let currentTab = null;
-  if (previousTabRef.current === null) {
+  if (previousTab === null) {
     currentTab = tabRefs.current[previousIndex || 0];
-    previousTabRef.current = currentTab;
+    previousTab = currentTab;
   }
 
   if (direction === RIGHT) {
-    if (Math.trunc(relativeScroll) > Math.trunc(previousRelativeScrollRef.current)) {
+    if (Math.trunc(relativeScroll) > Math.trunc(previousRelativeScroll)) {
       currentTab = tabRefs.current[Math.trunc(relativeScroll)];
     } else {
-      currentTab = previousTabRef.current;
+      currentTab = previousTab;
     }
   } else if (direction === LEFT) {
     if (
-      Math.trunc(relativeScroll) < Math.trunc(previousRelativeScrollRef.current) ||
+      Math.trunc(relativeScroll) < Math.trunc(previousRelativeScroll) ||
       relativeScroll % 1 === 0
     ) {
-      currentTab = tabRefs.current[Math.trunc(previousRelativeScrollRef.current)];
+      currentTab = tabRefs.current[Math.trunc(previousRelativeScroll)];
     } else {
-      currentTab = previousTabRef.current;
+      currentTab = previousTab;
     }
   }
 
-  let nextTab = direction === RIGHT
-    ? tabRefs.current[Math.ceil(relativeScroll)]
-    : tabRefs.current[Math.floor(relativeScroll)];
+  let nextTabIndex;
+  let lastTabIndex = tabRefs.current.length - 1;
   
-  return { previousTab: previousTabRef.current, currentTab, nextTab}
+  if (direction === RIGHT) {
+    nextTabIndex = clamp(Math.ceil(relativeScroll), 0, lastTabIndex);
+  } else {
+    nextTabIndex = clamp(Math.floor(relativeScroll), 0, lastTabIndex);
+  }
+
+  let nextTab = tabRefs.current[nextTabIndex];
+
+  if (relativeScroll < 0 || relativeScroll > lastTabIndex) {
+    previousTab = nextTab;
+    currentTab = nextTab;
+  }
+  
+  return { previousTab, currentTab, nextTab, }
 }
 
 export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndicatorRef, defaultIndex=0 }) {
@@ -164,11 +165,9 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
   const shouldSkipSettingIndexRef = useRef(false);
   const shouldSkipForcedScrollRef = useRef(false);
   const tabPanelsClientWidth = useTabPanelsClientWidth(tabPanelsRef);
-  const scrollClampBoundariesRef = useRef({left: null, right: null});
 
   useLayoutEffect(() => {
     setTabIndicatorWidth(tabRefs.current[index].clientWidth);
-    // tabIndicatorRef.current.style.width = tabRefs.current[index].clientWidth + 'px';
     shouldSkipForcedScrollRef.current = true;
   }, [tabPanelsClientWidth]);
 
@@ -182,10 +181,26 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
 
     if (!shouldSkipForcedScrollRef.current) {
       shouldSkipSettingIndexRef.current = true;
-      const scrollOptions = {left: index * tabPanelsClientWidth, behavior: "smooth"} ;
-      scrollPromise(tabPanelsRef.current.children[index], scrollOptions).then(() => {
+      tabPanelsRef.current.style = "scroll-snap-type: none";
+      animateScrollTo([index * tabPanelsRef.current.clientWidth, 0], {
+        elementToScroll: tabPanelsRef.current,
+        minDuration: 500,
+        cancelOnUserAction: false,
+        maxDuration: 1000,
+
+        easing: (t) => {
+          return t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
+        }
+      })
+        .then((hasScrolledToPosition) => {
           shouldSkipSettingIndexRef.current = false;
-      });
+          if (hasScrolledToPosition) {
+            tabPanelsRef.current.style = "scroll-snap-type: x mandatory";
+          }
+
+        }).catch(() => {
+            tabPanelsRef.current.style = "scroll-snap-type: x mandatory";
+        });
 
     } else {
       shouldSkipForcedScrollRef.current = false;
@@ -207,13 +222,15 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
     */
     
     let {previousTab, currentTab, nextTab} = getWorkingTabs({
-      previousTabRef,
+      previousTab: previousTabRef.current,
       previousIndex,  
       tabRefs,
       direction,
       relativeScroll,
-      previousRelativeScrollRef
+      previousRelativeScroll: previousRelativeScrollRef.current,
     });
+
+    previousTabRef.current = previousTab;
 
     const currentTabIndex = tabRefs.current.findIndex(tab => tab === currentTab);
 
