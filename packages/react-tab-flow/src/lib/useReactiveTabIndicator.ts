@@ -36,7 +36,7 @@ const RIGHT = "RIGHT";
 const LEFT = "LEFT";
 
 function calculateScaleX(nextTabWidth, currentTabWidth, currentTabScrollProgress) {
-  let scaleX;
+  let scaleX = 1;
   const tabWidthRatio = nextTabWidth / currentTabWidth;
 
   if (tabWidthRatio < 1) {
@@ -51,7 +51,7 @@ function calculateScaleX(nextTabWidth, currentTabWidth, currentTabScrollProgress
 function calculateTransform({currentTab, previousTab, nextTab, direction, relativeScroll, currentTabIndex, tabRefs}) {
     let currentTabScrollProgress;
     let scaleX;
-    let translateX;
+    let translateX = 0;
     let nextTabWidth;
     let currentTabWidth = currentTab.clientWidth;
     let offsetLeft = currentTab.offsetLeft || 0;
@@ -66,7 +66,7 @@ function calculateTransform({currentTab, previousTab, nextTab, direction, relati
       } else {
         translateX = offsetLeft - (1 - (relativeScroll % 1 || 1)) * nextTabWidth;
       }
-    } else {
+    } else if (relativeScroll >= 0 && relativeScroll <= tabRefs.current.length - 1) {
       currentTabScrollProgress = direction === RIGHT ? 1 - (relativeScroll % 1 || 1) : relativeScroll % 1;
 
       let wasGonnaBeNextTabIndex;
@@ -101,7 +101,7 @@ function useTabPanelsClientWidth(tabPanelsRef) {
   const { width } = useWindowSize();
 
   useEffect(() => {
-    setTabPanelsClientWidth(tabPanelsRef.current.clientWidth);
+    setTabPanelsClientWidth(tabPanelsRef.current.getBoundingClientRect().width);
   }, [width]);
 
   return tabPanelsClientWidth;
@@ -182,6 +182,7 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
     if (!shouldSkipForcedScrollRef.current) {
       shouldSkipSettingIndexRef.current = true;
       tabPanelsRef.current.style = "scroll-snap-type: none";
+      // animateScrollTo([index * tabPanelsClientWidth, 0], {
       animateScrollTo([index * tabPanelsRef.current.clientWidth, 0], {
         elementToScroll: tabPanelsRef.current,
         minDuration: 500,
@@ -208,11 +209,12 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
   }, [index, tabPanelsClientWidth]);
 
   const onScroll = React.useCallback((e) => {
-
-    const relativeScrollRaw = e.target.scrollLeft / tabPanelsClientWidth;
-    const relativeScroll = relativeScrollRaw % 1 < 0.01 ? Math.round(relativeScrollRaw) : relativeScrollRaw;
+    const scrollLeft = e.target.scrollLeft;
+    const relativeScrollRaw = scrollLeft / tabPanelsClientWidth;
+    const relativeScroll = Math.abs(Math.round(relativeScrollRaw) - relativeScrollRaw) < 0.001 ? Math.round(relativeScrollRaw) : relativeScrollRaw;
     const direction = previousRelativeScrollRef.current <= relativeScroll ? RIGHT : LEFT;
 
+    console.log(scrollLeft, tabPanelsClientWidth, scrollLeft / tabPanelsClientWidth, Math.abs(Math.round(relativeScrollRaw) - relativeScrollRaw))
 
     /*
       currentTab floats from previousTab to currentTab when the previousTab and nextTab are adjacent,
@@ -278,11 +280,26 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
     
   }, [tabPanelsClientWidth, index]);
 
+  // const onScroll = React.useCallback((e) => {
+  //   handleScrollChange(e.target.scrollLeft);
+  // }, [handleScrollChange]);
+
   React.useLayoutEffect(() => {
+    function onResize() {
+      const currentTab = tabRefs.current[index];
+      setTabIndicatorWidth(currentTab.clientWidth);
+    }
+    console.log({index})
+
     tabPanelsRef.current.addEventListener("scroll", onScroll);
+    // window.addEventListener("resize", onResize);
+    console.log('running useLayoutEffect')
 
     return () => {
+    console.log({index})
+      console.log('cleanup useLayoutEffect')
       tabPanelsRef.current.removeEventListener("scroll", onScroll);
+      // window.removeEventListener("resize", onResize);
     };
   }, [onScroll]);
 
