@@ -4,6 +4,14 @@ import useWindowSize from "./useWindowSize";
 import animateScrollTo from "animated-scroll-to";
 import ReactDOM from 'react-dom';
 
+let useTransition;
+
+if (React.useTransition) {
+  useTransition = React.useTransition;
+} else {
+  useTransition = () => [null, null];
+}
+
 function usePrevious(value) {
   const ref = useRef();
   useEffect(() => {
@@ -154,7 +162,7 @@ function getWorkingTabs({previousTab, previousIndex, tabRefs, direction, relativ
   return { previousTab, currentTab, nextTab, }
 }
 
-export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndicatorRef, defaultIndex=0 }) {
+export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndicatorRef, defaultIndex=0, preemptive=false }) {
   const [tabIndicatorWidth, setTabIndicatorWidth] = useState(null);
   const previousRelativeScrollRef = useRef(0);
   const indicatorTranslateXRef = useRef(0);
@@ -165,6 +173,7 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
   const shouldSkipSettingIndexRef = useRef(false);
   const shouldSkipForcedScrollRef = useRef(false);
   const tabPanelsClientWidth = useTabPanelsClientWidth(tabPanelsRef);
+  const isTouchingScreenRef = useRef(false);
 
   useLayoutEffect(() => {
     setTabIndicatorWidth(tabRefs.current[index].clientWidth);
@@ -197,6 +206,14 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
           shouldSkipSettingIndexRef.current = false;
           if (hasScrolledToPosition) {
             tabPanelsRef.current.style = "scroll-snap-type: x mandatory";
+
+
+            // On ios < 15, setting scroll-snap-type resets the scroll position
+            // so we need to reajust it to where it was before.
+            tabPanelsRef.current.scrollTo(
+              index * tabPanelsRef.current.clientWidth,
+              0
+            );
           }
 
         }).catch(() => {
@@ -208,13 +225,17 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
     }
   }, [index, tabPanelsClientWidth]);
 
+  const [_, startTransition] = useTransition();
+
   const onScroll = React.useCallback((e) => {
     const scrollLeft = e.target.scrollLeft;
     const relativeScrollRaw = scrollLeft / tabPanelsClientWidth;
+
     const relativeScroll = Math.abs(Math.round(relativeScrollRaw) - relativeScrollRaw) < 0.001 ? Math.round(relativeScrollRaw) : relativeScrollRaw;
     const direction = previousRelativeScrollRef.current <= relativeScroll ? RIGHT : LEFT;
 
-    console.log(scrollLeft, tabPanelsClientWidth, scrollLeft / tabPanelsClientWidth, Math.abs(Math.round(relativeScrollRaw) - relativeScrollRaw))
+
+    // console.log(scrollLeft, tabPanelsClientWidth, scrollLeft / tabPanelsClientWidth, Math.abs(Math.round(relativeScrollRaw) - relativeScrollRaw))
 
     /*
       currentTab floats from previousTab to currentTab when the previousTab and nextTab are adjacent,
@@ -233,6 +254,17 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
     });
 
     previousTabRef.current = previousTab;
+
+
+    if (startTransition && preemptive && !isTouchingScreenRef.current) {
+      if (Math.round(relativeScrollRaw) !== index && !shouldSkipSettingIndexRef.current) {
+        startTransition(() => {
+          setIndex(Math.round(relativeScroll));
+          shouldSkipForcedScrollRef.current = true;
+        })
+      }
+    }
+    
 
     const currentTabIndex = tabRefs.current.findIndex(tab => tab === currentTab);
 
@@ -289,19 +321,38 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
       const currentTab = tabRefs.current[index];
       setTabIndicatorWidth(currentTab.clientWidth);
     }
-    console.log({index})
+    // console.log({index})
 
     tabPanelsRef.current.addEventListener("scroll", onScroll);
     // window.addEventListener("resize", onResize);
-    console.log('running useLayoutEffect')
+    // console.log('running useLayoutEffect')
 
     return () => {
-    console.log({index})
-      console.log('cleanup useLayoutEffect')
+    // console.log({index})
+      // console.log('cleanup useLayoutEffect')
       tabPanelsRef.current.removeEventListener("scroll", onScroll);
       // window.removeEventListener("resize", onResize);
     };
   }, [onScroll]);
+
+
+  React.useEffect(() => {
+
+    function setTouchingFlag() {
+      isTouchingScreenRef.current = true;
+    }
+
+    function unsetTouchingFlag() {
+      isTouchingScreenRef.current = false;
+    }
+
+    tabPanelsRef.current.addEventListener('touchend', unsetTouchingFlag, {passive: true});
+    tabPanelsRef.current.addEventListener('touchstart', setTouchingFlag, {passive: true});
+    return () => {
+      tabPanelsRef.current.removeEventListener('touchend', unsetTouchingFlag);
+      tabPanelsRef.current.removeEventListener('touchstart', setTouchingFlag);
+    }
+  }, [tabPanelsClientWidth, index, setIndex, tabIndicatorRef.current])
 
   return { tabIndicatorWidth, index, setIndex };
 }

@@ -7,6 +7,7 @@ import { ThemeProvider } from "@mui/material/styles";
 import styled from "styled-components";
 import tabs from "./data";
 import { useReactiveTabIndicator, useWindowSize } from 'react-tab-flow';
+import Memoize from './Memoize';
 
 const Line = styled.div`
   height: 1rem;
@@ -24,7 +25,7 @@ const StyledTabPanels = styled.div`
   scroll-snap-type: x mandatory;
   display: flex;
   -webkit-overflow-scrolling: touch;
-  scroll-snap-stop: always;
+  // scroll-snap-stop: always;
   overflow-x: scroll;
   &::-webkit-scrollbar {
     display: none;
@@ -110,7 +111,7 @@ function App() {
     tabIndicatorWidth,
     index,
     setIndex
-  } = useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndicatorRef, defaultIndex: 1});
+  } = useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndicatorRef, defaultIndex: 1, preemptive: true});
   const addToRefs = React.useCallback(el => {
     if (el && !tabRefs.current.includes(el)) {
       tabRefs.current.push(el);
@@ -130,6 +131,10 @@ function App() {
     style: tabIndicatorStyle
   }), [tabIndicatorWidth]);
 
+  const onChange = React.useCallback((e, val) => {
+    setIndex(val);
+  }, [])
+
   return (
     <ThemeProvider theme={theme}>
       <div className="App">
@@ -137,7 +142,8 @@ function App() {
           value={index}
           variant="scrollable"
           TabIndicatorProps={tabIndicatorProps}
-          onChange={(e, val) => setIndex(val)}
+          onChange={onChange}
+          scrollButtons={false}
         >
             <Tab label="Tranquil Forrest" ref={addToRefs} key="1" />
             <Tab label="P" ref={addToRefs} key="2" />
