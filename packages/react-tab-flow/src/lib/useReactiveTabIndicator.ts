@@ -181,7 +181,7 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
   }, [tabPanelsClientWidth]);
 
   useLayoutEffect(() => {
-    if (index === defaultIndex && tabIndicatorRef.current) {
+    if (index === defaultIndex && tabPanelsRef.current) {
       tabPanelsRef.current.scrollLeft = index * tabPanelsClientWidth;
     }
   }, [tabPanelsClientWidth, tabIndicatorRef.current])
@@ -323,14 +323,14 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
     }
     // console.log({index})
 
-    tabPanelsRef.current.addEventListener("scroll", onScroll);
+    tabPanelsRef.current?.addEventListener("scroll", onScroll);
     // window.addEventListener("resize", onResize);
     // console.log('running useLayoutEffect')
 
     return () => {
     // console.log({index})
       // console.log('cleanup useLayoutEffect')
-      tabPanelsRef.current.removeEventListener("scroll", onScroll);
+      tabPanelsRef.current?.removeEventListener("scroll", onScroll);
       // window.removeEventListener("resize", onResize);
     };
   }, [onScroll]);
@@ -346,11 +346,11 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
       isTouchingScreenRef.current = false;
     }
 
-    tabPanelsRef.current.addEventListener('touchend', unsetTouchingFlag, {passive: true});
-    tabPanelsRef.current.addEventListener('touchstart', setTouchingFlag, {passive: true});
+    tabPanelsRef.current?.addEventListener('touchend', unsetTouchingFlag, {passive: true});
+    tabPanelsRef.current?.addEventListener('touchstart', setTouchingFlag, {passive: true});
     return () => {
-      tabPanelsRef.current.removeEventListener('touchend', unsetTouchingFlag);
-      tabPanelsRef.current.removeEventListener('touchstart', setTouchingFlag);
+      tabPanelsRef.current?.removeEventListener('touchend', unsetTouchingFlag);
+      tabPanelsRef.current?.removeEventListener('touchstart', setTouchingFlag);
     }
   }, [tabPanelsClientWidth, index, setIndex, tabIndicatorRef.current])
 

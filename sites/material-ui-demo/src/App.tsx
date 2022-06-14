@@ -102,21 +102,16 @@ const StyledTabPanelContent = React.memo(({ img, title }) => {
   );
 });
 
-function App() {
-  const tabPanelsRef = React.useRef(null);
-  const tabIndicatorRef = React.useRef(null);
-  const tabRefs = React.useRef([]);
+const TabsMemo = React.memo(Tabs);
+const TabMemo = React.memo(Tab);
 
+function AppTabs({tabPanelsRef, tabRefs, children}) {
+  const tabIndicatorRef = React.useRef(null);
   const {
     tabIndicatorWidth,
     index,
     setIndex
   } = useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndicatorRef, defaultIndex: 1, preemptive: true});
-  const addToRefs = React.useCallback(el => {
-    if (el && !tabRefs.current.includes(el)) {
-      tabRefs.current.push(el);
-    }
-  }, [tabRefs]);
 
   let tabIndicatorStyle = {
     left: 0,
@@ -136,20 +131,38 @@ function App() {
   }, [])
 
   return (
-    <ThemeProvider theme={theme}>
-      <div className="App">
-        <Tabs
+
+        <TabsMemo
           value={index}
           variant="scrollable"
           TabIndicatorProps={tabIndicatorProps}
           onChange={onChange}
           scrollButtons={false}
         >
-            <Tab label="Tranquil Forrest" ref={addToRefs} key="1" />
-            <Tab label="P" ref={addToRefs} key="2" />
-            <Tab label="Vibrant Beach" ref={addToRefs} key="3" />
-            <Tab label="Hidden Waterfall" ref={addToRefs} key="4" />
-        </Tabs>
+          {children}
+        </TabsMemo>
+  )
+}
+
+function App() {
+  const tabPanelsRef = React.useRef(null);
+
+  const tabRefs = React.useRef([]);
+  const addToRefs = React.useCallback(el => {
+    if (el && !tabRefs.current.includes(el)) {
+      tabRefs.current.push(el);
+    }
+  }, [tabRefs]);
+
+  return (
+    <ThemeProvider theme={theme}>
+      <div className="App">
+        <AppTabs tabPanelsRef={tabPanelsRef} tabRefs={tabRefs}>
+            <TabMemo label="Tranquil Forrest" ref={addToRefs} key="1" />
+            <TabMemo label="P" ref={addToRefs} key="2" />
+            <TabMemo label="Vibrant Beach" ref={addToRefs} key="3" />
+            <TabMemo label="Hidden Waterfall" ref={addToRefs} key="4" />
+          </AppTabs>
         <StyledTabPanels
           ref={tabPanelsRef}
         >
