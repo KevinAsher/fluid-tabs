@@ -6,8 +6,8 @@ import { Tabs, Tab, createMuiTheme } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
 import styled from "styled-components";
 import tabs from "./data";
-import { useReactiveTabIndicator, useWindowSize } from 'react-tab-flow';
-import Memoize from './Memoize';
+import { useReactiveTabIndicator, TabPanel, TabPanels } from 'react-tab-flow';
+import 'react-tab-flow/style.css'
 
 const Line = styled.div`
   height: 1rem;
@@ -163,17 +163,17 @@ function App() {
             <TabMemo label="Vibrant Beach" ref={addToRefs} key="3" />
             <TabMemo label="Hidden Waterfall" ref={addToRefs} key="4" />
           </AppTabs>
-        <StyledTabPanels
+        <TabPanels
           ref={tabPanelsRef}
         >
           {tabs.map(({ img, title }, i) => {
             return (
-              <StyledTabPanel key={i}>
+              <TabPanel key={i}>
                 <StyledTabPanelContent img={img} title={title} />
-              </StyledTabPanel>
+              </TabPanel>
             );
           })}
-        </StyledTabPanels>
+        </TabPanels>
       </div>
     </ThemeProvider>
   );

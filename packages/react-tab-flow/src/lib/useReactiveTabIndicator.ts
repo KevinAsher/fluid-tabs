@@ -115,6 +115,51 @@ function useTabPanelsClientWidth(tabPanelsRef) {
   return tabPanelsClientWidth;
 }
 
+function useIsTouchingRef(ref) {
+  const isTouchingRef = useRef(false);
+
+  React.useEffect(() => {
+
+    function setTouchingFlag() {
+      isTouchingRef.current = true;
+    }
+
+    function unsetTouchingFlag() {
+      isTouchingRef.current = false;
+    }
+
+    ref.current?.addEventListener('touchstart', setTouchingFlag, {passive: true});
+    ref.current?.addEventListener('touchend', unsetTouchingFlag, {passive: true});
+    return () => {
+      ref.current?.removeEventListener('touchstart', setTouchingFlag);
+      ref.current?.removeEventListener('touchend', unsetTouchingFlag);
+    }
+  }, []);
+
+  return isTouchingRef;
+}
+
+function useBlockPanYWhileScroll(tabPanelsRef) {
+  const rafIdRef = useRef(null);
+
+  return () => {
+    requestAnimationFrame(() => {
+      tabPanelsRef.current.style.touchAction = 'pan-x';
+    });
+
+
+    if (rafIdRef.current) {
+      cancelAnimationFrame(rafIdRef.current);
+    }
+
+    requestAnimationFrame(() => {
+      rafIdRef.current = requestAnimationFrame(() => {
+        tabPanelsRef.current.style.touchAction = 'auto';
+      });
+    });
+  }
+}
+
 function clamp(number, min, max) {
   return Math.max(min, Math.min(number, max));
 } 
@@ -173,7 +218,8 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
   const shouldSkipSettingIndexRef = useRef(false);
   const shouldSkipForcedScrollRef = useRef(false);
   const tabPanelsClientWidth = useTabPanelsClientWidth(tabPanelsRef);
-  const isTouchingScreenRef = useRef(false);
+  const isTouchingRef = useIsTouchingRef(tabPanelsRef);
+  const blockPanYWhileScroll = useBlockPanYWhileScroll(tabPanelsRef);
 
   useLayoutEffect(() => {
     setTabIndicatorWidth(tabRefs.current[index].clientWidth);
@@ -235,6 +281,8 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
     const direction = previousRelativeScrollRef.current <= relativeScroll ? RIGHT : LEFT;
 
 
+    blockPanYWhileScroll();
+
     // console.log(scrollLeft, tabPanelsClientWidth, scrollLeft / tabPanelsClientWidth, Math.abs(Math.round(relativeScrollRaw) - relativeScrollRaw))
 
     /*
@@ -256,7 +304,7 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
     previousTabRef.current = previousTab;
 
 
-    if (startTransition && preemptive && !isTouchingScreenRef.current) {
+    if (startTransition && preemptive && !isTouchingRef.current) {
       if (Math.round(relativeScrollRaw) !== index && !shouldSkipSettingIndexRef.current) {
         startTransition(() => {
           setIndex(Math.round(relativeScroll));
@@ -309,6 +357,8 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
       setIndex(currentTabIndex);
       setTabIndicatorWidth(currentTab.clientWidth);
     }
+    // alert('resettin')
+    tabPanelsRef.current.style.touchAction = 'auto';
     
   }, [tabPanelsClientWidth, index]);
 
@@ -335,24 +385,6 @@ export default function useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndi
     };
   }, [onScroll]);
 
-
-  React.useEffect(() => {
-
-    function setTouchingFlag() {
-      isTouchingScreenRef.current = true;
-    }
-
-    function unsetTouchingFlag() {
-      isTouchingScreenRef.current = false;
-    }
-
-    tabPanelsRef.current?.addEventListener('touchend', unsetTouchingFlag, {passive: true});
-    tabPanelsRef.current?.addEventListener('touchstart', setTouchingFlag, {passive: true});
-    return () => {
-      tabPanelsRef.current?.removeEventListener('touchend', unsetTouchingFlag);
-      tabPanelsRef.current?.removeEventListener('touchstart', setTouchingFlag);
-    }
-  }, [tabPanelsClientWidth, index, setIndex, tabIndicatorRef.current])
 
   return { tabIndicatorWidth, index, setIndex };
 }
