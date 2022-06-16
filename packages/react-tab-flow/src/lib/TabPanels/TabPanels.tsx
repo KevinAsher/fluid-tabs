@@ -10,17 +10,9 @@ interface Props {
   rest: any;
 }
 
-const defaultStyles = {
-  // display: 'flex',
-  // scrollSnapType: 'x mandatory',
-  // // scrollSnapStop: 'always',
-  // WebkitOverflowScrolling: 'touch',
-  // overflowX: 'scroll',
-};
-
 const TabPanels = React.forwardRef( function TabPanels({style, className, children, component: Component='div', ...rest}: Props, ref) {
   return (
-    <Component className={clsx(classes.root, className)} style={{...defaultStyles, ...style}} ref={ref} {...rest}>
+    <Component className={clsx(classes.root, className)} style={style} ref={ref} {...rest}>
       {children}
     </Component>
   )

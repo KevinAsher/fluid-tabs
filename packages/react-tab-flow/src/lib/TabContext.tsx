@@ -1,8 +1,13 @@
 import React from 'react';
+import useReactTabIndicator from './useReactiveTabIndicator';
 
+interface RenderProps {
+  index: string;
+  setIndex: (index: string) => void
+} 
 
 interface Props {
-  children: React.ReactNode;
+  children: (props: RenderProps) => React.ReactNode;
 } 
 
 export const LocalTabContext = React.createContext({});
@@ -17,9 +22,15 @@ export default function TabContext({children}: Props) {
     }
   }, [tabRefs]);
 
+  const {
+    tabIndicatorWidth,
+    index,
+    setIndex
+  } = useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndicatorRef, defaultIndex: 1, preemptive: true});
+
   return (
     <LocalTabContext.Provider value={{tabPanelsRef, tabRefs, addToRefs}}>
-      {children}
+      {children({index, setIndex})}
     </LocalTabContext.Provider>
   )
 }
