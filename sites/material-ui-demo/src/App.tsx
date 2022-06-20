@@ -6,7 +6,7 @@ import { Tabs, Tab, createMuiTheme } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
 import styled from "styled-components";
 import tabs from "./data";
-import { useReactiveTabIndicator, TabPanel, TabPanels } from 'react-tab-flow';
+import { useReactiveTabIndicator, FluidTabPanel, FluidTabPanels, FluidTabs, FluidTabList } from 'react-tab-flow';
 import 'react-tab-flow/style.css'
 
 const Line = styled.div`
@@ -105,15 +105,19 @@ const StyledTabPanelContent = React.memo(({ img, title }) => {
 const TabsMemo = React.memo(Tabs);
 const TabMemo = React.memo(Tab);
 
-function AppTabs({tabPanelsRef, tabRefs, children}) {
-  const tabIndicatorRef = React.useRef(null);
+function AppTabs({tabPanelsRef, children}) {
+  const [index, setIndex] = useState(1);
   const {
     tabIndicatorWidth,
-    index,
-    setIndex
-  } = useReactiveTabIndicator({ tabRefs, tabPanelsRef, tabIndicatorRef, defaultIndex: 1, preemptive: true});
+    tabIndicatorRef,
+    tabRefs
+  } = useReactiveTabIndicator({ index, setIndex, preemptive: true, tabPanelsRef });
 
-  let tabIndicatorStyle = {
+  const onChange = React.useCallback((e, val) => {
+    setIndex(val);
+  }, []);
+
+  const tabIndicatorStyle = {
     left: 0,
     width: tabIndicatorWidth,
     transition: "none",
@@ -126,54 +130,42 @@ function AppTabs({tabPanelsRef, tabRefs, children}) {
     style: tabIndicatorStyle
   }), [tabIndicatorWidth]);
 
-  const onChange = React.useCallback((e, val) => {
-    setIndex(val);
-  }, [])
 
   return (
-
-        <TabsMemo
-          value={index}
-          variant="scrollable"
-          TabIndicatorProps={tabIndicatorProps}
-          onChange={onChange}
-          scrollButtons={false}
-        >
-          {children}
-        </TabsMemo>
+      <FluidTabList
+        component={TabsMemo}
+        value={index}
+        TabIndicatorProps={tabIndicatorProps}
+        onChange={onChange}
+        tabRefs={tabRefs}
+        variant="scrollable"
+        scrollButtons={false}
+      >
+        {children}
+      </FluidTabList>
   )
 }
 
 function App() {
   const tabPanelsRef = React.useRef(null);
 
-  const tabRefs = React.useRef([]);
-  const addToRefs = React.useCallback(el => {
-    if (el && !tabRefs.current.includes(el)) {
-      tabRefs.current.push(el);
-    }
-  }, [tabRefs]);
 
   return (
     <ThemeProvider theme={theme}>
       <div className="App">
-        <AppTabs tabPanelsRef={tabPanelsRef} tabRefs={tabRefs}>
-            <TabMemo label="Tranquil Forrest" ref={addToRefs} key="1" />
-            <TabMemo label="P" ref={addToRefs} key="2" />
-            <TabMemo label="Vibrant Beach" ref={addToRefs} key="3" />
-            <TabMemo label="Hidden Waterfall" ref={addToRefs} key="4" />
-          </AppTabs>
-        <TabPanels
-          ref={tabPanelsRef}
-        >
-          {tabs.map(({ img, title }, i) => {
-            return (
-              <TabPanel key={i}>
-                <StyledTabPanelContent img={img} title={title} />
-              </TabPanel>
-            );
-          })}
-        </TabPanels>
+        <AppTabs tabPanelsRef={tabPanelsRef}>
+          <TabMemo label="Tranquil Forrest" key="1" />
+          <TabMemo label="P" key="2" />
+          <TabMemo label="Vibrant Beach" key="3" />
+          <TabMemo label="Hidden Waterfall" key="4" />
+        </AppTabs>
+        <FluidTabPanels ref={tabPanelsRef}>
+          {tabs.map(({ img, title }, i) =>
+            <FluidTabPanel key={i}>
+              <StyledTabPanelContent img={img} title={title} />
+            </FluidTabPanel>
+          )}
+        </FluidTabPanels>
       </div>
     </ThemeProvider>
   );

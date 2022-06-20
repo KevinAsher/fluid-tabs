@@ -1,5 +1,5 @@
 import React from 'react';
-import classes from './TabPanel.module.scss';
+import classes from './FluidTabPanel.module.scss';
 import clsx from 'clsx';
 
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
   rest: any;
 } 
 
-export default function TabPanel({style, className, children, component: Component='div', ...rest}: Props) {
+export default function FluidTabPanel({style, className, children, component: Component='div', ...rest}: Props) {
 
   return (
     <Component className={clsx(classes.root, className)} style={style} {...rest}>
