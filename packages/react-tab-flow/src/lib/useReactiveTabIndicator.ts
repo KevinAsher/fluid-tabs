@@ -2,7 +2,6 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
 import useWindowSize from "./useWindowSize";
 import animateScrollTo from "animated-scroll-to";
-import ReactDOM from 'react-dom';
 
 let useTransition;
 
@@ -18,26 +17,6 @@ function usePrevious(value) {
     ref.current = value;
   }, [value]);
   return ref.current;
-}
-
-
-function scrollPromise(element, options) {
-  return new Promise((resolve, reject) => {
-
-      element.parentElement.scroll(options);
-      const intersectionObserver = new IntersectionObserver((entries) => {
-        let [entry] = entries;
-        
-        if (entry.isIntersecting) {
-        
-          intersectionObserver.unobserve(element);
-          resolve();
-        }
-      }, {root: element.parentElement, threshold: 1.0 });
-      
-      // I start to observe the element where I scrolled 
-      intersectionObserver.observe(element);
-  })
 }
 
 const RIGHT = "RIGHT";
@@ -62,7 +41,7 @@ function calculateTransform({currentTab, previousTab, nextTab, direction, relati
     let translateX = 0;
     let nextTabWidth;
     let currentTabWidth = currentTab.clientWidth;
-    let offsetLeft = currentTab.offsetLeft || 0;
+    let offsetLeft = currentTab.offsetLeft;
 
     if (currentTab !== nextTab || previousTab !== currentTab) {
       currentTabScrollProgress = direction === RIGHT ? relativeScroll % 1 : 1 - (relativeScroll % 1);
@@ -139,36 +118,14 @@ function useIsTouchingRef(ref) {
   return isTouchingRef;
 }
 
-/* TODO: fix this as it dosen't handle all cases very well */
-function useBlockPanYWhileScroll(tabPanelsRef, isTouchingRef) {
-  const rafIdRef = useRef(null);
-
-  return () => {
-    requestAnimationFrame(() => {
-      tabPanelsRef.current.style.touchAction = 'pan-x';
-    });
-
-
-    if (rafIdRef.current) {
-      cancelAnimationFrame(rafIdRef.current);
-    }
-
-    requestAnimationFrame(() => {
-      // rafIdRef.current = requestAnimationFrame(() => {
-        tabPanelsRef.current.style.touchAction = 'auto';
-      // });
-    });
-  }
-}
-
 function clamp(number, min, max) {
   return Math.max(min, Math.min(number, max));
 } 
 
 function getWorkingTabs({previousTab, previousIndex, tabRefs, direction, relativeScroll, previousRelativeScroll}) {
-  let currentTab = null;
+  let currentTab = tabRefs.current[previousIndex];
+
   if (previousTab === null) {
-    currentTab = tabRefs.current[previousIndex || 0];
     previousTab = currentTab;
   }
 
@@ -178,7 +135,7 @@ function getWorkingTabs({previousTab, previousIndex, tabRefs, direction, relativ
     } else {
       currentTab = previousTab;
     }
-  } else if (direction === LEFT) {
+  } else {
     if (
       Math.trunc(relativeScroll) < Math.trunc(previousRelativeScroll) ||
       relativeScroll % 1 === 0
@@ -190,21 +147,15 @@ function getWorkingTabs({previousTab, previousIndex, tabRefs, direction, relativ
   }
 
   let nextTabIndex;
-  let lastTabIndex = tabRefs.current.length - 1;
   
   if (direction === RIGHT) {
-    nextTabIndex = clamp(Math.ceil(relativeScroll), 0, lastTabIndex);
+    nextTabIndex = Math.ceil(relativeScroll);
   } else {
-    nextTabIndex = clamp(Math.floor(relativeScroll), 0, lastTabIndex);
+    nextTabIndex = Math.floor(relativeScroll);
   }
 
   let nextTab = tabRefs.current[nextTabIndex];
 
-  if (relativeScroll < 0 || relativeScroll > lastTabIndex) {
-    previousTab = nextTab;
-    currentTab = nextTab;
-  }
-  
   return { previousTab, currentTab, nextTab, }
 }
 
@@ -219,7 +170,6 @@ export default function useReactiveTabIndicator({ tabPanelsRef, index, setIndex,
   const shouldSkipForcedScrollRef = useRef(false);
   const tabPanelsClientWidth = useTabPanelsClientWidth(tabPanelsRef);
   const isTouchingRef = useIsTouchingRef(tabPanelsRef);
-  const blockPanYWhileScroll = useBlockPanYWhileScroll(tabPanelsRef, isTouchingRef);
   const tabIndicatorRef = useRef(null);
   const tabRefs = useRef([]);
 
@@ -239,7 +189,6 @@ export default function useReactiveTabIndicator({ tabPanelsRef, index, setIndex,
     if (!shouldSkipForcedScrollRef.current) {
       shouldSkipSettingIndexRef.current = true;
       tabPanelsRef.current.style = "scroll-snap-type: none";
-      // animateScrollTo([index * tabPanelsClientWidth, 0], {
       animateScrollTo([index * tabPanelsRef.current.clientWidth, 0], {
         elementToScroll: tabPanelsRef.current,
         minDuration: 500,
@@ -282,10 +231,7 @@ export default function useReactiveTabIndicator({ tabPanelsRef, index, setIndex,
     const relativeScroll = Math.abs(Math.round(relativeScrollRaw) - relativeScrollRaw) < 0.001 ? Math.round(relativeScrollRaw) : relativeScrollRaw;
     const direction = previousRelativeScrollRef.current <= relativeScroll ? RIGHT : LEFT;
 
-
-    blockPanYWhileScroll();
-
-    // console.log(scrollLeft, tabPanelsClientWidth, scrollLeft / tabPanelsClientWidth, Math.abs(Math.round(relativeScrollRaw) - relativeScrollRaw))
+    if (relativeScroll < 0 || relativeScroll > tabRefs.current.length - 1) return;
 
     /*
       currentTab floats from previousTab to currentTab when the previousTab and nextTab are adjacent,
@@ -305,17 +251,15 @@ export default function useReactiveTabIndicator({ tabPanelsRef, index, setIndex,
 
     previousTabRef.current = previousTab;
 
-
     if (preemptive && !isTouchingRef.current) {
       if (Math.round(relativeScrollRaw) !== index && !shouldSkipSettingIndexRef.current) {
         startTransition(() => {
-          setIndex(Math.round(relativeScroll));
+          setIndex(Math.round(relativeScrollRaw));
           shouldSkipForcedScrollRef.current = true;
         })
       }
     }
     
-
     const currentTabIndex = tabRefs.current.findIndex(tab => tab === currentTab);
 
     let { translateX, scaleX } = calculateTransform({
@@ -336,12 +280,12 @@ export default function useReactiveTabIndicator({ tabPanelsRef, index, setIndex,
       const translateXCss = `translateX(${indicatorTranslateXRef.current}px)`;
 
       tabIndicatorRef.current.style.transform = `${translateXCss} ${scaleXCss}`;
+      tabPanelsRef.current.style.touchAction = relativeScroll !== index ? 'pan-x' : 'auto';
     });
 
     previousRelativeScrollRef.current = relativeScroll;
 
     if (previousTab === currentTab) return;
-    
     previousTabRef.current = currentTab;
 
     /* 
@@ -350,7 +294,11 @@ export default function useReactiveTabIndicator({ tabPanelsRef, index, setIndex,
       This is only for when the indicator is passing by other elements until it reaches it's
       destination tab. Once it reaches it, we re-sync the elements width with it's actual state.
     */
-    tabIndicatorRef.current.style.width = currentTab.clientWidth + 'px';
+
+    requestAnimationFrame(() => {
+      tabIndicatorRef.current.style.width = currentTab.clientWidth + 'px';
+      tabPanelsRef.current.style.touchAction = 'auto';
+    })
 
     if (index === currentTabIndex) {
       startTransition(() => {
@@ -363,31 +311,18 @@ export default function useReactiveTabIndicator({ tabPanelsRef, index, setIndex,
         setTabIndicatorWidth(currentTab.clientWidth);
       })
     }
-    // alert('resettin')
-    tabPanelsRef.current.style.touchAction = 'auto';
-    
   }, [tabPanelsClientWidth, index]);
-
-  // const onScroll = React.useCallback((e) => {
-  //   handleScrollChange(e.target.scrollLeft);
-  // }, [handleScrollChange]);
 
   React.useLayoutEffect(() => {
     function onResize() {
       const currentTab = tabRefs.current[index];
       setTabIndicatorWidth(currentTab.clientWidth);
     }
-    // console.log({index})
 
     tabPanelsRef.current?.addEventListener("scroll", onScroll);
-    // window.addEventListener("resize", onResize);
-    // console.log('running useLayoutEffect')
 
     return () => {
-    // console.log({index})
-      // console.log('cleanup useLayoutEffect')
       tabPanelsRef.current?.removeEventListener("scroll", onScroll);
-      // window.removeEventListener("resize", onResize);
     };
   }, [onScroll]);
 
