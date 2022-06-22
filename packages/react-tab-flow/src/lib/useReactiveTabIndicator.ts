@@ -159,7 +159,7 @@ function getWorkingTabs({previousTab, previousIndex, tabRefs, direction, relativ
   return { previousTab, currentTab, nextTab, }
 }
 
-export default function useReactiveTabIndicator({ tabPanelsRef, index, setIndex, preemptive=false }) {
+export default function useReactiveTabIndicator({ tabPanelsRef, index, setIndex, preemptive=false, lockScrollWhenSwiping=false  }) {
   const [tabIndicatorWidth, setTabIndicatorWidth] = useState(null);
   const previousRelativeScrollRef = useRef(0);
   const indicatorTranslateXRef = useRef(0);
@@ -280,7 +280,7 @@ export default function useReactiveTabIndicator({ tabPanelsRef, index, setIndex,
       const translateXCss = `translateX(${indicatorTranslateXRef.current}px)`;
 
       tabIndicatorRef.current.style.transform = `${translateXCss} ${scaleXCss}`;
-      tabPanelsRef.current.style.touchAction = relativeScroll !== index ? 'pan-x' : 'auto';
+      if (lockScrollWhenSwiping) tabPanelsRef.current.style.touchAction = relativeScroll !== index ? 'pan-x' : 'auto';
     });
 
     previousRelativeScrollRef.current = relativeScroll;
@@ -297,7 +297,7 @@ export default function useReactiveTabIndicator({ tabPanelsRef, index, setIndex,
 
     requestAnimationFrame(() => {
       tabIndicatorRef.current.style.width = currentTab.clientWidth + 'px';
-      tabPanelsRef.current.style.touchAction = 'auto';
+      if (lockScrollWhenSwiping) tabPanelsRef.current.style.touchAction = 'auto';
     })
 
     if (index === currentTabIndex) {
