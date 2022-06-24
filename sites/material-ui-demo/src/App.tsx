@@ -178,14 +178,14 @@ const CustomTabsMemo = React.memo(CustomTabs);
 function AppCustomTabs({tabPanelsRef, children}) {
   const [index, setIndex] = useState(1);
   const {
-    tabIndicatorWidth,
+    tabIndicatorStyles,
     tabIndicatorRef,
     tabRefs
   } = useReactiveTabIndicator({ index, setIndex, preemptive: true, tabPanelsRef });
 
   const tabIndicatorStyle = {
+    ...tabIndicatorStyles,
     left: 0,
-    width: tabIndicatorWidth,
     transition: "none",
     willChange: "transform, width",
     transformOrigin: "left 50% 0"
@@ -194,7 +194,7 @@ function AppCustomTabs({tabPanelsRef, children}) {
   let tabIndicatorProps = React.useMemo(() => ({
     ref: tabIndicatorRef,
     style: tabIndicatorStyle
-  }), [tabIndicatorWidth]);
+  }), [tabIndicatorStyles]);
 
   return (
     <FluidTabList 
@@ -211,7 +211,7 @@ function AppCustomTabs({tabPanelsRef, children}) {
 function AppMuiTabs({tabPanelsRef, children}) {
   const [index, setIndex] = useState(1);
   const {
-    tabIndicatorWidth,
+    tabIndicatorStyles,
     tabIndicatorRef,
     tabRefs
   } = useReactiveTabIndicator({ index, setIndex, preemptive: true, tabPanelsRef });
@@ -221,8 +221,8 @@ function AppMuiTabs({tabPanelsRef, children}) {
   }, []);
 
   const tabIndicatorStyle = {
+    ...tabIndicatorStyles,
     left: 0,
-    width: tabIndicatorWidth,
     transition: "none",
     willChange: "transform, width",
     transformOrigin: "left 50% 0"
@@ -231,7 +231,7 @@ function AppMuiTabs({tabPanelsRef, children}) {
   let tabIndicatorProps = React.useMemo(() => ({
     ref: tabIndicatorRef,
     style: tabIndicatorStyle
-  }), [tabIndicatorWidth]);
+  }), [tabIndicatorStyles]);
 
   return (
     <FluidTabList 

@@ -160,7 +160,7 @@ function getWorkingTabs({previousTab, previousIndex, tabRefs, direction, relativ
 }
 
 export default function useReactiveTabIndicator({ tabPanelsRef, index, setIndex, preemptive=false, lockScrollWhenSwiping=false  }) {
-  const [tabIndicatorWidth, setTabIndicatorWidth] = useState(null);
+  const [tabIndicatorStyles, setTabIndicatorStyles] = useState(null);
   const previousRelativeScrollRef = useRef(0);
   const indicatorTranslateXRef = useRef(0);
   const indicatorScaleXRef = useRef(1);
@@ -172,9 +172,10 @@ export default function useReactiveTabIndicator({ tabPanelsRef, index, setIndex,
   const isTouchingRef = useIsTouchingRef(tabPanelsRef);
   const tabIndicatorRef = useRef(null);
   const tabRefs = useRef([]);
+  const indexRef = useRef(index);
 
   useLayoutEffect(() => {
-    setTabIndicatorWidth(tabRefs.current[index].clientWidth);
+    setTabIndicatorStyles({width: tabRefs.current[index].clientWidth});
     shouldSkipForcedScrollRef.current = true;
   }, [tabPanelsClientWidth]);
 
@@ -224,8 +225,6 @@ export default function useReactiveTabIndicator({ tabPanelsRef, index, setIndex,
 
   const [_, startTransition] = useTransition();
 
-  let indexRef = useRef(index);
-  indexRef.current = index;
   const onScroll = React.useCallback((e) => {
     const scrollLeft = e.target.scrollLeft;
     const relativeScrollRaw = scrollLeft / tabPanelsClientWidth;
@@ -305,23 +304,26 @@ export default function useReactiveTabIndicator({ tabPanelsRef, index, setIndex,
 
     if (index === currentTabIndex) {
       startTransition(() => {
-        setTabIndicatorWidth(currentTab.clientWidth);
+        setTabIndicatorStyles({width: currentTab.clientWidth})
       })
     } else if (!shouldSkipSettingIndexRef.current) {
       shouldSkipForcedScrollRef.current = true;
       startTransition(() => {
         setIndex(currentTabIndex);
-        setTabIndicatorWidth(currentTab.clientWidth);
+        setTabIndicatorStyles({width: currentTab.clientWidth})
       })
     }
   }, [tabPanelsClientWidth]);
+ 
+  
+  // Latest ref pattern - avoid recreating events on index change - we don't 
+  // want to reattach scroll event listeners on preemptive mode, which might cause us
+  // to lose a frame? (needs testing).
+  React.useLayoutEffect(() => {
+    indexRef.current = index;
+  });
 
   React.useLayoutEffect(() => {
-    // function onResize() {
-    //   const currentTab = tabRefs.current[index];
-    //   setTabIndicatorWidth(currentTab.clientWidth);
-    // }
-
     tabPanelsRef.current?.addEventListener("scroll", onScroll);
 
     return () => {
@@ -330,5 +332,5 @@ export default function useReactiveTabIndicator({ tabPanelsRef, index, setIndex,
   }, [onScroll]);
 
 
-  return { tabIndicatorWidth, tabIndicatorRef, tabPanelsRef, tabRefs };
+  return { tabIndicatorStyles, tabIndicatorRef, tabPanelsRef, tabRefs };
 }
