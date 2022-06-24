@@ -224,9 +224,12 @@ export default function useReactiveTabIndicator({ tabPanelsRef, index, setIndex,
 
   const [_, startTransition] = useTransition();
 
+  let indexRef = useRef(index);
+  indexRef.current = index;
   const onScroll = React.useCallback((e) => {
     const scrollLeft = e.target.scrollLeft;
     const relativeScrollRaw = scrollLeft / tabPanelsClientWidth;
+    const index = indexRef.current;
 
     const relativeScroll = Math.abs(Math.round(relativeScrollRaw) - relativeScrollRaw) < 0.001 ? Math.round(relativeScrollRaw) : relativeScrollRaw;
     const direction = previousRelativeScrollRef.current <= relativeScroll ? RIGHT : LEFT;
@@ -311,13 +314,13 @@ export default function useReactiveTabIndicator({ tabPanelsRef, index, setIndex,
         setTabIndicatorWidth(currentTab.clientWidth);
       })
     }
-  }, [tabPanelsClientWidth, index]);
+  }, [tabPanelsClientWidth]);
 
   React.useLayoutEffect(() => {
-    function onResize() {
-      const currentTab = tabRefs.current[index];
-      setTabIndicatorWidth(currentTab.clientWidth);
-    }
+    // function onResize() {
+    //   const currentTab = tabRefs.current[index];
+    //   setTabIndicatorWidth(currentTab.clientWidth);
+    // }
 
     tabPanelsRef.current?.addEventListener("scroll", onScroll);
 
