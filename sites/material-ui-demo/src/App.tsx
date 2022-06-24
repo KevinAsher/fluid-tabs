@@ -135,8 +135,6 @@ const CustomTab = React.forwardRef(({label, selected, value, onChange}, ref) => 
         color: selected ? 'rgba(0,0,0,1)' : 'rgba(0,0,0,0.5)', 
         margin: 0,
         border: 'none',
-        height: '100%',
-        padding: 0,
         background: 'none', 
         minWidth: 90,
         padding: '8px 16px', 
@@ -177,7 +175,40 @@ const TabMemo = React.memo(Tab);
 const CustomTabMemo = React.memo(CustomTab);
 const CustomTabsMemo = React.memo(CustomTabs);
 
-function AppTabs({tabPanelsRef, children}) {
+function AppCustomTabs({tabPanelsRef, children}) {
+  const [index, setIndex] = useState(1);
+  const {
+    tabIndicatorWidth,
+    tabIndicatorRef,
+    tabRefs
+  } = useReactiveTabIndicator({ index, setIndex, preemptive: true, tabPanelsRef });
+
+  const tabIndicatorStyle = {
+    left: 0,
+    width: tabIndicatorWidth,
+    transition: "none",
+    willChange: "transform, width",
+    transformOrigin: "left 50% 0"
+  };
+
+  let tabIndicatorProps = React.useMemo(() => ({
+    ref: tabIndicatorRef,
+    style: tabIndicatorStyle
+  }), [tabIndicatorWidth]);
+
+  return (
+    <FluidTabList 
+      component={CustomTabsMemo} 
+      onChange={setIndex} 
+      value={index} 
+      tabIndicatorProps={tabIndicatorProps} 
+      tabRefs={tabRefs}>
+      {children}
+    </FluidTabList>
+  );
+}
+
+function AppMuiTabs({tabPanelsRef, children}) {
   const [index, setIndex] = useState(1);
   const {
     tabIndicatorWidth,
@@ -203,27 +234,18 @@ function AppTabs({tabPanelsRef, children}) {
   }), [tabIndicatorWidth]);
 
   return (
-    <FluidTabList component={CustomTabsMemo} onChange={setIndex} value={index} tabIndicatorProps={tabIndicatorProps} tabRefs={tabRefs}>
+    <FluidTabList 
+      component={TabsMemo} 
+      onChange={onChange} 
+      value={index} 
+      TabIndicatorProps={tabIndicatorProps} 
+      variant="scrollable"
+      scrollButtons={false}
+      tabRefs={tabRefs}>
       {children}
     </FluidTabList>
   );
-
-/*   return (
-      <FluidTabList
-        component={TabsMemo}
-        value={index}
-        TabIndicatorProps={tabIndicatorProps}
-        onChange={onChange}
-        tabRefs={tabRefs}
-        variant="scrollable"
-        scrollButtons={false}
-      >
-        {children}
-      </FluidTabList>
-  ) */
-
 }
-
 function App() {
   const tabPanelsRef = React.useRef(null);
 
@@ -231,18 +253,18 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <div className="App">
-        <AppTabs tabPanelsRef={tabPanelsRef}>
+        {/* <AppCustomTabs tabPanelsRef={tabPanelsRef}>
           <CustomTabMemo label="Tranquil Forrest" key="1" />
           <CustomTabMemo label="P" key="2" />
           <CustomTabMemo label="Vibrant Beach" key="3" />
           <CustomTabMemo label="Hidden Waterfall" key="4" />
-        </AppTabs>
-{/*         <AppTabs tabPanelsRef={tabPanelsRef}>
+        </AppCustomTabs> */}
+        <AppMuiTabs tabPanelsRef={tabPanelsRef}>
           <TabMemo label="Tranquil Forrest" key="1" />
           <TabMemo label="P" key="2" />
           <TabMemo label="Vibrant Beach" key="3" />
           <TabMemo label="Hidden Waterfall" key="4" />
-        </AppTabs> */}
+        </AppMuiTabs>
         <FluidTabPanels ref={tabPanelsRef}>
           {tabs.map(({ img, title }, i) =>
             <FluidTabPanel key={i}>
