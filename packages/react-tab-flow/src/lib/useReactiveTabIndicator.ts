@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, useRef, useEffect, useLayoutEffect, startTransition } from "react";
+import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
 import useWindowSize from "./useWindowSize";
 import animateScrollTo from "animated-scroll-to";
 
@@ -92,7 +92,7 @@ function useTabPanelsClientWidth(tabPanelsRef) {
 function useIsTouchingRef(ref) {
   const isTouchingRef = useRef(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
 
     function setTouchingFlag() {
       isTouchingRef.current = true;
@@ -166,22 +166,29 @@ export default function useReactiveTabIndicator({ tabPanelsRef, index, setIndex,
   const indexRef = useRef(index);
 
   useLayoutEffect(() => {
-    setTabIndicatorStyles({width: tabsRef.current[index].clientWidth});
+    // Skip forced scroll on mount
     shouldSkipForcedScrollRef.current = true;
-  }, [tabPanelsClientWidth]);
+  }, []);
 
+  // Effect runs when the scroll container width changes, e.g. mobile orientation changed.
   useLayoutEffect(() => {
-    if (tabPanelsRef.current) {
-      tabPanelsRef.current.scrollLeft = index * tabPanelsClientWidth;
-    }
-  }, [tabPanelsClientWidth])
+    setTabIndicatorStyles({width: tabsRef.current[indexRef.current].clientWidth});
 
+    if (tabPanelsRef.current) {
+      tabPanelsRef.current.scrollLeft = indexRef.current * tabPanelsClientWidth;
+    }
+  }, [tabPanelsClientWidth]);
+  
+  // Run the below effect on index change.
+  // If a tab was clicked (index changed), we need to synchronize the scroll position.
+  // Certain cases when updating the current index (e.g., preemptive mode), we should'nt synchronize
+  // the scroll position, so we keep it behind a flag, but also, re-enable the flag once we skiped it once.
   useEffect(() => {
 
     if (!shouldSkipForcedScrollRef.current) {
       shouldSkipSettingIndexRef.current = true;
       tabPanelsRef.current.style = "scroll-snap-type: none";
-      animateScrollTo([index * tabPanelsClientWidth, 0], {
+      animateScrollTo([index * tabPanelsRef.current.clientWidth, 0], {
         elementToScroll: tabPanelsRef.current,
         minDuration: 500,
         cancelOnUserAction: false,
@@ -212,15 +219,14 @@ export default function useReactiveTabIndicator({ tabPanelsRef, index, setIndex,
     } else {
       shouldSkipForcedScrollRef.current = false;
     }
-  }, [index, tabPanelsClientWidth]);
+  }, [index]);
 
-  const onScroll = React.useCallback((e) => {
-
+  const onScroll = useCallback((e) => {
     // Total amount of pixels scrolled in the scroll container
     const scrollLeft = e.target.scrollLeft;
 
     // Scroll progress relative to the panel, e.g., 0.4 means we scrolled the 40% the first panel
-    const relativeScrollRaw = scrollLeft / tabPanelsClientWidth;
+    const relativeScrollRaw = scrollLeft / tabPanelsRef.current.clientWidth;
 
     const index = indexRef.current;
 
@@ -231,13 +237,6 @@ export default function useReactiveTabIndicator({ tabPanelsRef, index, setIndex,
 
     if (relativeScroll < 0 || relativeScroll > tabsRef.current.length - 1) return;
 
-    /*
-      currentTab floats from previousTab to currentTab when the previousTab and nextTab are adjacent,
-      also, currentTab has the value of previousTab until the last scroll callback, in which it becomes 
-      next tab. Otherwise, currentTab can have an intermediate tab value, but only for a single scroll callback, 
-      because the previous tab will get the value of the intermediate tab in the next scroll callback.
-    */
-    
     let {previousTab, currentTab, nextTab} = getWorkingTabs({
       previousTab: previousTabRef.current,
       previousIndex,  
@@ -306,17 +305,17 @@ export default function useReactiveTabIndicator({ tabPanelsRef, index, setIndex,
         setTabIndicatorStyles({width: currentTab.clientWidth})
       })
     }
-  }, [tabPanelsClientWidth]);
+  }, [lockScrollWhenSwiping, preemptive]);
  
   
   // Latest ref pattern - avoid recreating events on index change - we don't 
   // want to reattach scroll event listeners on preemptive mode, which might cause us
   // to lose a frame? (needs testing).
-  React.useLayoutEffect(() => {
+  useLayoutEffect(() => {
     indexRef.current = index;
   });
 
-  React.useLayoutEffect(() => {
+  useEffect(() => {
     tabPanelsRef.current?.addEventListener("scroll", onScroll);
 
     return () => {
