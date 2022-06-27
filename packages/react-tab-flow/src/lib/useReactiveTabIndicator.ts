@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
+import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import useWindowSize from "./useWindowSize";
 import animateScrollTo from "animated-scroll-to";
 
