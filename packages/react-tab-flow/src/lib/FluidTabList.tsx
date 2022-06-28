@@ -12,16 +12,16 @@ import React from 'react';
 // } 
 
 interface Props {
-  tabRefs: React.RefObject<HTMLElement[]>;
+  tabsRef: React.RefObject<HTMLElement[]>;
   children: JSX.Element[];
   component: React.ElementType;
   rest: any;
 } 
 
-const FluidTabList = React.forwardRef(({ tabRefs, children, component: Component, ...rest }: Props, ref) => {
+const FluidTabList = React.forwardRef(({ tabsRef, children, component: Component, ...rest }: Props, ref) => {
   const addToRefs = React.useCallback((el: HTMLElement | null) => {
-    if (el && !tabRefs.current?.includes(el)) {
-      tabRefs.current?.push(el);
+    if (el && !tabsRef.current?.includes(el)) {
+      tabsRef.current?.push(el);
     }
   }, []);
 

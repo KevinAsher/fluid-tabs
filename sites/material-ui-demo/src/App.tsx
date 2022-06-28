@@ -180,7 +180,7 @@ function AppCustomTabs({tabPanelsRef, children}) {
   const {
     tabIndicatorStyles,
     tabIndicatorRef,
-    tabRefs
+    tabsRef
   } = useReactiveTabIndicator({ index, setIndex, preemptive: true, tabPanelsRef });
 
   const tabIndicatorStyle = {
@@ -202,7 +202,7 @@ function AppCustomTabs({tabPanelsRef, children}) {
       onChange={setIndex} 
       value={index} 
       tabIndicatorProps={tabIndicatorProps} 
-      tabRefs={tabRefs}>
+      tabsRef={tabsRef}>
       {children}
     </FluidTabList>
   );
@@ -213,7 +213,7 @@ function AppMuiTabs({tabPanelsRef, children}) {
   const {
     tabIndicatorStyles,
     tabIndicatorRef,
-    tabRefs
+    tabsRef
   } = useReactiveTabIndicator({ index, setIndex, preemptive: true, tabPanelsRef });
 
   const onChange = React.useCallback((e, val) => {
@@ -241,7 +241,7 @@ function AppMuiTabs({tabPanelsRef, children}) {
       TabIndicatorProps={tabIndicatorProps} 
       variant="scrollable"
       scrollButtons={false}
-      tabRefs={tabRefs}>
+      tabsRef={tabsRef}>
       {children}
     </FluidTabList>
   );
