@@ -222,7 +222,13 @@ function AppMuiTabs({tabPanelsRef, children}) {
     tabIndicatorStyles,
     tabIndicatorRef,
     tabsRef
-  } = useReactiveTabIndicator({ value: routeMatch.params.tab, setValue: (val) => navigate(`./${val}`), preemptive: true, tabPanelsRef });
+  } = useReactiveTabIndicator({ 
+    value: routeMatch.params.tab, 
+    setValue: (val) => navigate(`./${val}`), 
+    tabPanelsRef,
+    preemptive: true,
+    lockScrollWhenSwiping: true,
+  });
 
   const onChange = React.useCallback((e, val) => {
     setValue(val);
