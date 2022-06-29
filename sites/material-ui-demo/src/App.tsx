@@ -7,6 +7,7 @@ import { ThemeProvider, useThemeProps } from "@mui/material/styles";
 import styled from "styled-components";
 import tabs from "./data";
 import { useReactiveTabIndicator, FluidTabPanel, FluidTabPanels, FluidTabs, FluidTabList } from 'react-tab-flow';
+import { BrowserRouter, Routes, Route, Link, useMatch, useNavigate, Navigate } from "react-router-dom";
 import 'react-tab-flow/style.css'
 
 const Line = styled.div`
@@ -209,12 +210,19 @@ function AppCustomTabs({tabPanelsRef, children}) {
 }
 
 function AppMuiTabs({tabPanelsRef, children}) {
-  const [value, setValue] = useState(1);
+  const routeMatch = useMatch({
+    path: '/:tab',
+    end: true,
+    caseSensitive: true
+  });
+
+  const navigate = useNavigate();
+  // const [value, setValue] = useState(1);
   const {
     tabIndicatorStyles,
     tabIndicatorRef,
     tabsRef
-  } = useReactiveTabIndicator({ value, setValue, preemptive: true, tabPanelsRef });
+  } = useReactiveTabIndicator({ value: routeMatch.params.tab, setValue: (val) => navigate(`./${val}`), preemptive: true, tabPanelsRef });
 
   const onChange = React.useCallback((e, val) => {
     setValue(val);
@@ -236,8 +244,8 @@ function AppMuiTabs({tabPanelsRef, children}) {
   return (
     <FluidTabList 
       component={TabsMemo} 
-      onChange={onChange} 
-      value={value} 
+      // onChange={onChange}
+      value={routeMatch.params.tab || 'p'} 
       TabIndicatorProps={tabIndicatorProps} 
       variant="scrollable"
       scrollButtons={false}
@@ -246,9 +254,11 @@ function AppMuiTabs({tabPanelsRef, children}) {
     </FluidTabList>
   );
 }
-function App() {
-  const tabPanelsRef = React.useRef(null);
 
+
+
+function AppInner() {
+  const tabPanelsRef = React.useRef(null);
 
   return (
     <ThemeProvider theme={theme}>
@@ -260,21 +270,39 @@ function App() {
           <CustomTabMemo label="Hidden Waterfall" key="4" />
         </AppCustomTabs> */}
         <AppMuiTabs tabPanelsRef={tabPanelsRef}>
-          <TabMemo label="Tranquil Forrest" key="1" />
-          <TabMemo label="P" key="2" />
-          <TabMemo label="Vibrant Beach" key="3" />
-          <TabMemo label="Hidden Waterfall" key="4" />
+          <TabMemo component={Link} to="/tranquil-forest" value="tranquil-forest" label="Tranquil Forrest" key="1" />
+          <TabMemo component={Link} to="/p" value="p" label="P" key="2" />
+          <TabMemo component={Link} to="/vibrant-beach" value="vibrant-beach" label="Vibrant Beach" key="3" />
+          <TabMemo component={Link} to="/hidden-waterfall" value="hidden-waterfall" label="Hidden Waterfall" key="4" />
         </AppMuiTabs>
         <FluidTabPanels ref={tabPanelsRef}>
-          {tabs.map(({ img, title }, i) =>
-            <FluidTabPanel key={i}>
-              <StyledTabPanelContent img={img} title={title} />
-            </FluidTabPanel>
-          )}
+            {tabs.map(({ img, title }, i) =>
+              <Routes>
+                <Route 
+                  path={"*"} 
+                  element={
+                    <FluidTabPanel>
+                      <StyledTabPanelContent img={img} title={title} />
+                    </FluidTabPanel>
+                  }
+                  />
+              </Routes>
+            )}
         </FluidTabPanels>
       </div>
     </ThemeProvider>
   );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to="/p" />} /> 
+        <Route path="*" element={<AppInner />} /> 
+      </Routes>
+    </BrowserRouter>
+  )
 }
 
 export default App

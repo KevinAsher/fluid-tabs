@@ -124,14 +124,15 @@ function getWorkingTabs({previousTab, tabs, direction, relativeScroll, previousR
   let scrollTabIndex = Math.trunc(relativeScroll);
   let previousScrollTabIndex = Math.trunc(previousRelativeScroll);
 
-  if (direction === RIGHT && scrollTabIndex > previousScrollTabIndex) {
+  if (relativeScroll === previousRelativeScroll) {
+    currentTab = tabs[scrollTabIndex];
+  } else if (direction === RIGHT && scrollTabIndex > previousScrollTabIndex) {
     currentTab = tabs[scrollTabIndex];
   } else if (direction === LEFT && (scrollTabIndex < previousScrollTabIndex || relativeScroll % 1 === 0)) {
     currentTab = tabs[previousScrollTabIndex];
   }
 
   let nextTab = tabs[direction === RIGHT ? Math.ceil(relativeScroll) : Math.floor(relativeScroll)];
-
   return { currentTab, nextTab }
 }
 
@@ -167,6 +168,9 @@ export default function useReactiveTabIndicator({ tabPanelsRef, value, setValue,
       const index = tabsRef.current.valueToIndex.get(value);
       // This will trigger a scroll event, which will be handled by our scroll handler.
       tabPanelsRef.current.scrollLeft = index * tabPanelsClientWidth;
+
+      // Force a scroll event, even if there isn't pixels to scroll
+      tabPanelsRef.current.dispatchEvent(new CustomEvent('scroll'));
     }
   }, [tabPanelsClientWidth]);
   
@@ -175,12 +179,13 @@ export default function useReactiveTabIndicator({ tabPanelsRef, value, setValue,
   // Certain cases when updating the current index (e.g., preemptive mode), we should'nt synchronize
   // the scroll position, so we keep it behind a flag, but also, re-enable the flag once we skiped it.
   useEffect(() => {
+    shouldSkipSettingIndexRef.current = false;
 
     if (!shouldSkipForcedScrollRef.current) {
       const index = tabsRef.current.valueToIndex.get(value); 
       shouldSkipSettingIndexRef.current = true;
       tabPanelsRef.current.style = "scroll-snap-type: none";
-      animateScrollTo([index * tabPanelsRef.current.clientWidth, 0], {
+      animateScrollTo([index * tabPanelsRef.current.getBoundingClientRect().width, 0], {
         elementToScroll: tabPanelsRef.current,
         minDuration: 500,
         cancelOnUserAction: false,
@@ -214,8 +219,11 @@ export default function useReactiveTabIndicator({ tabPanelsRef, value, setValue,
     // Total amount of pixels scrolled in the scroll container
     const scrollLeft = e.target.scrollLeft;
 
-    // Scroll progress relative to the panel, e.g., 0.4 means we scrolled 40% of the first panel
-    const relativeScrollRaw = scrollLeft / tabPanelsRef.current.clientWidth;
+    // Scroll progress relative to the panel, e.g., 0.4 means we scrolled 40% of the first panel.
+    // We can't use tabPanelsClientWidth here because we will lose a scroll event (from a screen
+    // orientation change, for example), since the event listener will get re-attached.
+    // Calling getBoundingClientRect on every frame is OK.
+    const relativeScrollRaw = scrollLeft / tabPanelsRef.current.getBoundingClientRect().width;
 
     const closestTabPanelIndex = Math.round(relativeScrollRaw);
 
@@ -233,6 +241,7 @@ export default function useReactiveTabIndicator({ tabPanelsRef, value, setValue,
       startTransition(() => {
         setValue(getByValue(tabsRef.current.valueToIndex, closestTabPanelIndex));
         shouldSkipForcedScrollRef.current = true;
+        shouldSkipSettingIndexRef.current = true;
       })
     }
 
@@ -242,8 +251,8 @@ export default function useReactiveTabIndicator({ tabPanelsRef, value, setValue,
       tabs: tabsRef.current.nodes,
       previousTab: previousTabRef.current, 
       previousRelativeScroll: previousRelativeScrollRef.current,
-    });
-    
+    })
+
     const currentTabIndex = tabsRef.current.nodes.findIndex(tab => tab === currentTab);
 
     let { translateX, scaleX } = calculateTransform({
@@ -291,6 +300,7 @@ export default function useReactiveTabIndicator({ tabPanelsRef, value, setValue,
       })
     } else if (!shouldSkipSettingIndexRef.current) {
       shouldSkipForcedScrollRef.current = true;
+      
       startTransition(() => {
         setValue(getByValue(tabsRef.current.valueToIndex, currentTabIndex));
         setTabIndicatorStyles({width: currentTab.clientWidth});
