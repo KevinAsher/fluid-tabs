@@ -176,12 +176,12 @@ const CustomTabMemo = React.memo(CustomTab);
 const CustomTabsMemo = React.memo(CustomTabs);
 
 function AppCustomTabs({tabPanelsRef, children}) {
-  const [index, setIndex] = useState(1);
+  const [value, setValue] = useState(1);
   const {
     tabIndicatorStyles,
     tabIndicatorRef,
     tabsRef
-  } = useReactiveTabIndicator({ index, setIndex, preemptive: true, tabPanelsRef });
+  } = useReactiveTabIndicator({ value, setValue, preemptive: true, tabPanelsRef });
 
   const tabIndicatorStyle = {
     ...tabIndicatorStyles,
@@ -199,8 +199,8 @@ function AppCustomTabs({tabPanelsRef, children}) {
   return (
     <FluidTabList 
       component={CustomTabsMemo} 
-      onChange={setIndex} 
-      value={index} 
+      onChange={setValue} 
+      value={value} 
       tabIndicatorProps={tabIndicatorProps} 
       tabsRef={tabsRef}>
       {children}
@@ -209,15 +209,15 @@ function AppCustomTabs({tabPanelsRef, children}) {
 }
 
 function AppMuiTabs({tabPanelsRef, children}) {
-  const [index, setIndex] = useState(1);
+  const [value, setValue] = useState(1);
   const {
     tabIndicatorStyles,
     tabIndicatorRef,
     tabsRef
-  } = useReactiveTabIndicator({ index, setIndex, preemptive: true, tabPanelsRef });
+  } = useReactiveTabIndicator({ value, setValue, preemptive: true, tabPanelsRef });
 
   const onChange = React.useCallback((e, val) => {
-    setIndex(val);
+    setValue(val);
   }, []);
 
   const tabIndicatorStyle = {
@@ -237,7 +237,7 @@ function AppMuiTabs({tabPanelsRef, children}) {
     <FluidTabList 
       component={TabsMemo} 
       onChange={onChange} 
-      value={index} 
+      value={value} 
       TabIndicatorProps={tabIndicatorProps} 
       variant="scrollable"
       scrollButtons={false}

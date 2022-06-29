@@ -11,8 +11,13 @@ import React from 'react';
 //   preemptive: boolean;
 // } 
 
+interface TabsRef {
+  nodes: HTMLElement[],
+  valueToIndex: Map<string, number>
+};
+
 interface Props {
-  tabsRef: React.RefObject<HTMLElement[]>;
+  tabsRef: React.RefObject<TabsRef>;
   children: JSX.Element[];
   component: React.ElementType;
   rest: any;
@@ -20,12 +25,20 @@ interface Props {
 
 const FluidTabList = React.forwardRef(({ tabsRef, children, component: Component, ...rest }: Props, ref) => {
   const addToRefs = React.useCallback((el: HTMLElement | null) => {
-    if (el && !tabsRef.current?.includes(el)) {
-      tabsRef.current?.push(el);
+    if (el && !tabsRef.current!.nodes.includes(el)) {
+      tabsRef.current!.nodes.push(el);
     }
   }, []);
 
-  const childrenWithRef = React.Children.map(children, (child) => React.cloneElement(child, {ref: addToRefs}, undefined));
+  const childrenWithRef = React.Children.map(children, (child, index) => {
+    return React.cloneElement(child, {ref: addToRefs}, undefined);
+  });
+
+  React.useLayoutEffect(() => {
+    React.Children.map(children, (child, index) => {
+      tabsRef.current!.valueToIndex.set(child.props.value ?? index, index);
+    });
+  });
 
   return (
    <Component ref={ref} {...rest}>
