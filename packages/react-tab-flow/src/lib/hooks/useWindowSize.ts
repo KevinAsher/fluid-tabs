@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 // https://usehooks.com/useWindowSize/
 import { useState, useEffect } from "react";
 
@@ -18,7 +16,7 @@ function useWindowSize() {
 
   useEffect(() => {
     if (!isClient) {
-      return false;
+      return;
     }
 
     function handleResize() {
