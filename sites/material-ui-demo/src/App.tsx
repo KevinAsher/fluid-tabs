@@ -6,7 +6,7 @@ import { Tabs, Tab, createMuiTheme } from "@mui/material";
 import { ThemeProvider, useThemeProps } from "@mui/material/styles";
 import styled from "styled-components";
 import tabs from "./data";
-import { useReactiveTabIndicator, FluidTabPanel, FluidTabPanels, FluidTabs, FluidTabList } from 'react-tab-flow';
+import { useReactiveTabIndicator, FluidTabPanel, FluidTabPanels, FluidTabs } from 'react-tab-flow';
 import { BrowserRouter, Routes, Route, Link, useMatch, useNavigate, Navigate } from "react-router-dom";
 import 'react-tab-flow/style.css'
 
@@ -179,33 +179,25 @@ const CustomTabsMemo = React.memo(CustomTabs);
 function AppCustomTabs({tabPanelsRef, children}) {
   const [value, setValue] = useState(1);
   const {
-    tabIndicatorStyles,
+    tabIndicatorStyle,
     tabIndicatorRef,
     tabsRef
   } = useReactiveTabIndicator({ value, setValue, preemptive: true, tabPanelsRef });
 
-  const tabIndicatorStyle = {
-    ...tabIndicatorStyles,
-    left: 0,
-    transition: "none",
-    willChange: "transform, width",
-    transformOrigin: "left 50% 0"
-  };
-
   let tabIndicatorProps = React.useMemo(() => ({
     ref: tabIndicatorRef,
     style: tabIndicatorStyle
-  }), [tabIndicatorStyles]);
+  }), [tabIndicatorStyle]);
 
   return (
-    <FluidTabList 
+    <FluidTabs 
       component={CustomTabsMemo} 
       onChange={setValue} 
       value={value} 
       tabIndicatorProps={tabIndicatorProps} 
       tabsRef={tabsRef}>
       {children}
-    </FluidTabList>
+    </FluidTabs>
   );
 }
 
@@ -219,7 +211,7 @@ function AppMuiTabs({tabPanelsRef, children}) {
   const navigate = useNavigate();
   // const [value, setValue] = useState(1);
   const {
-    tabIndicatorStyles,
+    tabIndicatorStyle,
     tabIndicatorRef,
     tabsRef
   } = useReactiveTabIndicator({ 
@@ -234,21 +226,14 @@ function AppMuiTabs({tabPanelsRef, children}) {
     setValue(val);
   }, []);
 
-  const tabIndicatorStyle = {
-    ...tabIndicatorStyles,
-    left: 0,
-    transition: "none",
-    willChange: "transform, width",
-    transformOrigin: "left 50% 0"
-  };
 
   let tabIndicatorProps = React.useMemo(() => ({
     ref: tabIndicatorRef,
     style: tabIndicatorStyle
-  }), [tabIndicatorStyles]);
+  }), [tabIndicatorStyle]);
 
   return (
-    <FluidTabList 
+    <FluidTabs 
       component={TabsMemo} 
       // onChange={onChange}
       value={routeMatch.params.tab || 'p'} 
@@ -257,7 +242,7 @@ function AppMuiTabs({tabPanelsRef, children}) {
       scrollButtons={false}
       tabsRef={tabsRef}>
       {children}
-    </FluidTabList>
+    </FluidTabs>
   );
 }
 

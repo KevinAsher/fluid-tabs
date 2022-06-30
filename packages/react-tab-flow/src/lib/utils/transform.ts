@@ -5,7 +5,7 @@ interface CalculateScaleXProps {
   currentTabScrollProgress: number,
 }
 
-function calculateScaleX({nextTabWidth, currentTabWidth, currentTabScrollProgress}: CalculateScaleXProps): number {
+export function calculateScaleX({nextTabWidth, currentTabWidth, currentTabScrollProgress}: CalculateScaleXProps): number {
   let scaleX = 1;
   const tabWidthRatio = nextTabWidth / currentTabWidth;
 
@@ -25,7 +25,7 @@ export enum Direction {
 
 interface CalculateTransformProps {
   currentTab: HTMLElement
-  previousTab: HTMLElement
+  previousTab: HTMLElement | null
   nextTab: HTMLElement
   direction: Direction
   relativeScroll: number
