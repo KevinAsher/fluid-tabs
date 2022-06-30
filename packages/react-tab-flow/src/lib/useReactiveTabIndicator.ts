@@ -297,8 +297,13 @@ export default function useReactiveTabIndicator({
     if (tabPanelsRef.current) {
       const index = tabsRef.current.valueToIndex.get(valueRef.current);
 
-      // This will trigger a scroll event, which will be handled by our scroll handler.
-      tabPanelsRef.current.scrollLeft = index * tabPanelsClientWidth!;
+      requestAnimationFrame(() => {
+        // This will trigger a scroll event, which will be handled by our scroll handler.
+        // It's wrapped within a raf because sometimes Safari randomly just refuses to
+        // to generate the scroll event after the initial page load, maybe a timing/rendering issue,
+        // which happens sporadically.
+        tabPanelsRef.current!.scrollLeft = index * tabPanelsClientWidth!;
+      })
 
       if (index === 0) {
         // We need to force a scroll event here since setting scrollLeft
