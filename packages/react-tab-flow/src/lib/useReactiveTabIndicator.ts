@@ -116,6 +116,10 @@ const initialTabIndicatorStyle = {
   transition: "none",
   transformOrigin: "left 50% 0",
   willChange: 'transform, width',
+  // Make it initially invisible, and only made visible after the first scroll event
+  // which happens on mount. This is used to avoid seeing the tab indicator
+  // jump around when the component mounts.
+  visibility: 'hidden'
 };
 
 export default function useReactiveTabIndicator({ 
@@ -269,7 +273,11 @@ export default function useReactiveTabIndicator({
     if (index === currentTabIndex) {
       // we have reached our destination tab, resync width as previously mentioned.
       startTransition(() => {
-        setTabIndicatorStyle((style: React.CSSProperties) => ({...style, width: currentTab.clientWidth}));
+        setTabIndicatorStyle((style: React.CSSProperties) => ({
+          ...style, 
+          width: currentTab.clientWidth, 
+          visibility: 'visible'
+        }));
       })
     } else if (!shouldSkipSettingIndexRef.current) {
       shouldSkipForcedScrollRef.current = true;
