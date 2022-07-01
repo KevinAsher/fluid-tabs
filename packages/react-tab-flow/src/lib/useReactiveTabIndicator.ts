@@ -136,7 +136,7 @@ export default function useReactiveTabIndicator({
   const previousRelativeScrollRef = useRef(0);
   const previousTabRef = useRef<HTMLElement | null>(null);
   const canChangeTabRef = useRef<boolean>(true);
-  const canAnimateScrollToPanel = useRef<boolean>(true);
+  const canAnimateScrollToPanel = useRef<boolean>(false);
   const tabPanelsClientWidth = useElementWidth(tabPanelsRef);
   const isTouchingRef = useIsTouchingRef(tabPanelsRef);
   const tabIndicatorRef = useRef<HTMLElement | null>(null);
@@ -144,7 +144,7 @@ export default function useReactiveTabIndicator({
   const valueRef = useRef(value);
 
   useLayoutEffect(() => {
-    // Skip forced scroll on mount
+    // Don't let animation play on mount
     canAnimateScrollToPanel.current = false;
   }, []);
 
@@ -154,10 +154,12 @@ export default function useReactiveTabIndicator({
     valueRef.current = value;
   });
   
-  // Run the below effect on index change.
-  // If a tab was clicked (index changed), we need to synchronize the scroll position.
-  // Certain cases when updating the current index (e.g., preemptive mode), we should'nt synchronize
+  // Run the below effect on tab change.
+  // If a diferent tab was clicked, we need to synchronize the scroll position.
+  // Certain cases when updating the current tab (e.g., preemptive mode), we should'nt synchronize
   // the scroll position, so we keep it behind a flag, but also, re-enable the flag once we skiped it.
+  // We can't depend on tabPanelsClientWidth here because we don't want to trigger a scrolling animation
+  // on width size change.
   useEffect(() => {
     canChangeTabRef.current = true;
 
@@ -167,7 +169,8 @@ export default function useReactiveTabIndicator({
       canAnimateScrollToPanel.current = true;
       return;
     }
-
+    
+    /* Animate scrolling to the relevant tab panel */
     const index = tabsRef.current.valueToIndex.get(value)!; 
     canChangeTabRef.current = false;
     tabPanelsEl.style.scrollSnapType = "none";
@@ -185,7 +188,7 @@ export default function useReactiveTabIndicator({
         // On ios < 15, setting scroll-snap-type resets the scroll position
         // so we need to reajust it to where it was before.
         tabPanelsEl.scrollTo(
-          index * tabPanelsEl.clientWidth,
+          index * tabPanelsEl.getBoundingClientRect().width,
           0
         );
       }
@@ -271,6 +274,7 @@ export default function useReactiveTabIndicator({
         destination tab. Once it reaches it, we re-sync the elements width with it's actual state.
       */
       tabIndicatorRef.current!.style.width = currentTab.clientWidth + 'px';
+
       if (lockScrollWhenSwiping) tabPanelsRef.current!.style.touchAction = 'auto';
     })
 
