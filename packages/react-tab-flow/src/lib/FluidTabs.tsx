@@ -19,7 +19,6 @@ const FluidTabs = React.forwardRef(({ tabsRef, children, component: Component, .
     return React.cloneElement(child, {ref: addToRefs}, undefined);
   });
 
-
   // Latest ref pattern - keep child props in sync with ref data
   React.useLayoutEffect(() => {
     React.Children.map(children, (child, index) => {

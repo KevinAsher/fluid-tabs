@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
-import animateScrollTo from "animated-scroll-to";
+import animateScrollTo, { type IOptions } from "animated-scroll-to";
 import { 
   calculateTransform, 
   Direction,
@@ -81,14 +81,22 @@ export interface ReactiveTabIndicatorHookProps {
    * 
    * This feature is recommended to use with for React 18+ concurrent mode to avoid jank, since 
    * it triggers a state update while scrolling.
+   * @default false
    */
   preemptive: boolean,
   
   /**
    * Disables vertical scrolling, this handles the case when a snap scroll is interrupted by a vertical
    * scroll, which keeps the UI in the middle of two tab panels.
+   * @default false
    */
-  lockScrollWhenSwiping: boolean  
+  lockScrollWhenSwiping?: boolean  
+
+  /**
+   * Customize on tab click scroll animation.
+   * @see https://github.com/Stanko/animated-scroll-to#options
+   */
+  animateScrollToOptions?: IOptions,
 }
 
 interface TabsRef {
@@ -130,7 +138,8 @@ export default function useReactiveTabIndicator({
   value, 
   onChange, 
   preemptive=false, 
-  lockScrollWhenSwiping=false  
+  lockScrollWhenSwiping=false,
+  animateScrollToOptions,
 }: ReactiveTabIndicatorHookProps) : ReactiveTabIndicatorHookValues {
   const [tabIndicatorStyle, setTabIndicatorStyle] = useState<React.CSSProperties>(initialTabIndicatorStyle);
   const previousRelativeScrollRef = useRef(0);
@@ -176,14 +185,15 @@ export default function useReactiveTabIndicator({
     canChangeTabRef.current = false;
     tabPanelsEl.style.scrollSnapType = "none";
     animateScrollTo([index * tabPanelsEl.getBoundingClientRect().width, 0], {
-      elementToScroll: tabPanelsEl,
       minDuration: 500,
-      cancelOnUserAction: false,
-      maxDuration: 1000,
+      maxDuration: 800,
       easing: easeInOutCubic,
+      ...animateScrollToOptions,
+      elementToScroll: tabPanelsEl,
+      cancelOnUserAction: false,
     }).then((hasScrolledToPosition) => {
-      canChangeTabRef.current = true;
       if (hasScrolledToPosition) {
+        canChangeTabRef.current = true;
         tabPanelsEl.style.scrollSnapType = "x mandatory";
 
         // On ios < 15, setting scroll-snap-type resets the scroll position
