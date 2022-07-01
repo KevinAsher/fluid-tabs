@@ -144,7 +144,8 @@ export default function useReactiveTabIndicator({
   const valueRef = useRef(value);
 
   useLayoutEffect(() => {
-    // Don't let animation play on mount
+    // Don't let animation play on mount.
+    // Setting default value at ref initialization above is not enough since React 18.
     canAnimateScrollToPanel.current = false;
   }, []);
 
