@@ -123,11 +123,11 @@ const CustomTabsRoot = styled.div`
   background: #fff;
 `;
 
-const CustomTab = React.forwardRef(({label, selected, value, onChange}, ref) => {
+const CustomTab = React.forwardRef(({label, selected, value, onChange, style, component: Component='button', ...other}, ref) => {
   return (
-    <button
+    <Component
       ref={ref}
-      onClick={() => onChange(value)}
+      onClick={() => onChange?.(value)}
       style={{
         display: 'inline-flex',
         justifyContent: 'center',
@@ -141,11 +141,14 @@ const CustomTab = React.forwardRef(({label, selected, value, onChange}, ref) => 
         padding: '8px 16px', 
         height: 50,
         whiteSpace: 'nowrap',
-        flexShrink: 0
+        flexShrink: 0,
+        textDecoration: 'none',
+        ...style
       }}
+      {...other}
       >
       {label}
-    </button>
+    </Component>
   )
 })
 
@@ -177,12 +180,27 @@ const CustomTabMemo = React.memo(CustomTab);
 const CustomTabsMemo = React.memo(CustomTabs);
 
 function AppCustomTabs({tabPanelsRef, children}) {
+  // const routeMatch = useMatch({
+  //   path: '/:tab',
+  //   end: true,
+  //   caseSensitive: true
+  // });
+
+  // const navigate = useNavigate();
   const [value, setValue] = useState(1);
   const {
     tabIndicatorStyle,
     tabIndicatorRef,
     tabsRef
-  } = useReactiveTabIndicator({ value, setValue, preemptive: true, tabPanelsRef });
+  } = useReactiveTabIndicator({ 
+    value, 
+    onChange: setValue, 
+    // value: routeMatch.params.tab, 
+    // onChange: (val) => navigate(`./${val}`), 
+    tabPanelsRef,
+    preemptive: true,
+    // lockScrollWhenSwiping: true,
+  });
 
   let tabIndicatorProps = React.useMemo(() => ({
     ref: tabIndicatorRef,
@@ -194,6 +212,7 @@ function AppCustomTabs({tabPanelsRef, children}) {
       component={CustomTabsMemo} 
       onChange={setValue} 
       value={value} 
+      // value={routeMatch.params.tab} 
       tabIndicatorProps={tabIndicatorProps} 
       tabsRef={tabsRef}>
       {children}
@@ -217,6 +236,8 @@ function AppMuiTabs({tabPanelsRef, children}) {
   } = useReactiveTabIndicator({ 
     value: routeMatch.params.tab, 
     onChange: (val) => navigate(`./${val}`), 
+    // value, 
+    // onChange: setValue,
     tabPanelsRef,
     preemptive: true,
     lockScrollWhenSwiping: true,
@@ -236,6 +257,7 @@ function AppMuiTabs({tabPanelsRef, children}) {
     <FluidTabs 
       component={TabsMemo} 
       // onChange={onChange}
+      // value={value} 
       value={routeMatch.params.tab} 
       TabIndicatorProps={tabIndicatorProps} 
       variant="scrollable"
@@ -260,12 +282,24 @@ function AppInner() {
           <CustomTabMemo label="Vibrant Beach" key="3" />
           <CustomTabMemo label="Hidden Waterfall" key="4" />
         </AppCustomTabs> */}
+        {/* <AppCustomTabs tabPanelsRef={tabPanelsRef}>
+          <CustomTabMemo component={Link} to="/tranquil-forest" value="tranquil-forest" label="Tranquil Forrest" key="1" />
+          <CustomTabMemo component={Link} to="/p" value="p" label="P" key="2" />
+          <CustomTabMemo component={Link} to="/vibrant-beach" value="vibrant-beach" label="Vibrant Beach" key="3" />
+          <CustomTabMemo component={Link} to="/hidden-waterfall" value="hidden-waterfall" label="Hidden Waterfall" key="4" />
+        </AppCustomTabs> */}
         <AppMuiTabs tabPanelsRef={tabPanelsRef}>
           <TabMemo component={Link} to="/tranquil-forest" value="tranquil-forest" label="Tranquil Forrest" key="1" />
           <TabMemo component={Link} to="/p" value="p" label="P" key="2" />
           <TabMemo component={Link} to="/vibrant-beach" value="vibrant-beach" label="Vibrant Beach" key="3" />
           <TabMemo component={Link} to="/hidden-waterfall" value="hidden-waterfall" label="Hidden Waterfall" key="4" />
         </AppMuiTabs>
+        {/* <AppMuiTabs tabPanelsRef={tabPanelsRef}>
+          <TabMemo label="Tranquil Forrest" key="1" />
+          <TabMemo label="P" key="2" />
+          <TabMemo label="Vibrant Beach" key="3" />
+          <TabMemo label="Hidden Waterfall" key="4" />
+        </AppMuiTabs> */}
         <FluidTabPanels ref={tabPanelsRef}>
             {tabs.map(({ img, title }, i) =>
               <Routes>
