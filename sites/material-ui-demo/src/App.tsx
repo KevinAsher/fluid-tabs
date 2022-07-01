@@ -216,7 +216,7 @@ function AppMuiTabs({tabPanelsRef, children}) {
     tabsRef
   } = useReactiveTabIndicator({ 
     value: routeMatch.params.tab, 
-    setValue: (val) => navigate(`./${val}`), 
+    onChange: (val) => navigate(`./${val}`), 
     tabPanelsRef,
     preemptive: true,
     lockScrollWhenSwiping: true,
@@ -236,7 +236,7 @@ function AppMuiTabs({tabPanelsRef, children}) {
     <FluidTabs 
       component={TabsMemo} 
       // onChange={onChange}
-      value={routeMatch.params.tab || 'p'} 
+      value={routeMatch.params.tab} 
       TabIndicatorProps={tabIndicatorProps} 
       variant="scrollable"
       scrollButtons={false}

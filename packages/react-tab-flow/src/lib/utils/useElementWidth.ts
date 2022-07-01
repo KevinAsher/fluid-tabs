@@ -13,7 +13,7 @@ export default function useElementWidth(elementRef: React.RefObject<HTMLElement>
 
   useEffect(() => {
     setElementClientWidth(elementRef.current!.getBoundingClientRect().width);
-  }, [width]);
+  }, [width, elementRef]);
 
   return elementClientWidth;
 }

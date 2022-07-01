@@ -1,3 +1,4 @@
+import Direction from './direction';
 
 interface CalculateScaleXProps {
   nextTabWidth: number,
@@ -16,11 +17,6 @@ export function calculateScaleX({nextTabWidth, currentTabWidth, currentTabScroll
   }
 
   return scaleX;
-}
-
-export enum Direction {
-  LEFT = "LEFT",
-  RIGHT = "RIGHT"
 }
 
 interface CalculateTransformProps {
@@ -43,7 +39,7 @@ function clamp(num: number, min: number, max: number) {
 } 
 
 // TODO: simplify convoluted function
-export function calculateTransform({
+export default function calculateTransform({
   currentTab, 
   previousTab, 
   nextTab, 

@@ -19,7 +19,7 @@ export default function useIsTouchingRef(ref: React.RefObject<HTMLElement>) {
       ref.current?.removeEventListener('touchstart', setTouchingFlag);
       ref.current?.removeEventListener('touchend', unsetTouchingFlag);
     }
-  }, []);
+  }, [ref]);
 
   return isTouchingRef;
 }

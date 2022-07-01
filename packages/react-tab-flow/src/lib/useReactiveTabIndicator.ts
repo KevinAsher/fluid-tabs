@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import animateScrollTo from "animated-scroll-to";
-import { calculateTransform, Direction } from './utils/transform' ;
-import { getKeyByValue } from './utils/common';
-import useElementWidth from './hooks/useElementWidth';
-import useIsTouchingRef from './hooks/useIsTouchingRef';
+import { 
+  calculateTransform, 
+  Direction,
+  getKeyByValue,
+  useElementWidth,
+  useIsTouchingRef
+} from './utils' ;
 
 // Simple fallback for React versions before 18
 let startTransition = React.startTransition || (cb => cb());
@@ -62,12 +65,12 @@ export interface ReactiveTabIndicatorHookProps {
   /**
    * State that controls the current active tab.
    */
-  value: any, 
+  value: string | number, 
 
   /**
    * Setter to control the current active tab.
    */
-  setValue: (val: any) => any, 
+  onChange: (val: string | number | undefined) => any, 
 
   /**
    * Preemptively changes the current active tab once we scrolled more then 50% of 
@@ -90,7 +93,7 @@ export interface ReactiveTabIndicatorHookProps {
 
 interface TabsRef {
   nodes: HTMLElement[],
-  valueToIndex: Map<string, number>
+  valueToIndex: Map<string | number, number>
 };
 
 export interface ReactiveTabIndicatorHookValues {
@@ -111,7 +114,7 @@ export interface ReactiveTabIndicatorHookValues {
   tabsRef: React.RefObject<TabsRef>;
 }
 
-const initialTabIndicatorStyle = {
+const initialTabIndicatorStyle: React.CSSProperties = {
   left: 0,
   transition: "none",
   transformOrigin: "left 50% 0",
@@ -125,24 +128,24 @@ const initialTabIndicatorStyle = {
 export default function useReactiveTabIndicator({ 
   tabPanelsRef, 
   value, 
-  setValue, 
+  onChange, 
   preemptive=false, 
   lockScrollWhenSwiping=false  
 }: ReactiveTabIndicatorHookProps) : ReactiveTabIndicatorHookValues {
   const [tabIndicatorStyle, setTabIndicatorStyle] = useState<React.CSSProperties>(initialTabIndicatorStyle);
   const previousRelativeScrollRef = useRef(0);
   const previousTabRef = useRef<HTMLElement | null>(null);
-  const shouldSkipSettingIndexRef = useRef<boolean>(false);
-  const shouldSkipForcedScrollRef = useRef<boolean>(false);
+  const canChangeTabRef = useRef<boolean>(true);
+  const canAnimateScrollToPanel = useRef<boolean>(true);
   const tabPanelsClientWidth = useElementWidth(tabPanelsRef);
   const isTouchingRef = useIsTouchingRef(tabPanelsRef);
   const tabIndicatorRef = useRef<HTMLElement | null>(null);
-  const tabsRef = useRef({nodes: [], valueToIndex: new Map()});
+  const tabsRef = useRef({nodes: [], valueToIndex: new Map<string | number, number>()});
   const valueRef = useRef(value);
 
   useLayoutEffect(() => {
     // Skip forced scroll on mount
-    shouldSkipForcedScrollRef.current = true;
+    canAnimateScrollToPanel.current = false;
   }, []);
 
   // Latest ref pattern - we use it here to have latest value on the scroll listener
@@ -156,42 +159,41 @@ export default function useReactiveTabIndicator({
   // Certain cases when updating the current index (e.g., preemptive mode), we should'nt synchronize
   // the scroll position, so we keep it behind a flag, but also, re-enable the flag once we skiped it.
   useEffect(() => {
-    shouldSkipSettingIndexRef.current = false;
+    canChangeTabRef.current = true;
 
     const tabPanelsEl = tabPanelsRef.current!;
 
-    if (!shouldSkipForcedScrollRef.current) {
-      const index = tabsRef.current.valueToIndex.get(value); 
-      shouldSkipSettingIndexRef.current = true;
-      tabPanelsEl.style.scrollSnapType = "none";
-      animateScrollTo([index * tabPanelsEl.getBoundingClientRect().width, 0], {
-        elementToScroll: tabPanelsEl,
-        minDuration: 500,
-        cancelOnUserAction: false,
-        maxDuration: 1000,
-        easing: easeInOutCubic,
-      })
-        .then((hasScrolledToPosition) => {
-          shouldSkipSettingIndexRef.current = false;
-          if (hasScrolledToPosition) {
-            tabPanelsEl.style.scrollSnapType = "x mandatory";
-
-            // On ios < 15, setting scroll-snap-type resets the scroll position
-            // so we need to reajust it to where it was before.
-            tabPanelsEl.scrollTo(
-              index * tabPanelsEl.clientWidth,
-              0
-            );
-          }
-
-        }).catch(() => {
-            tabPanelsEl.style.scrollSnapType = "x mandatory";
-        });
-
-    } else {
-      shouldSkipForcedScrollRef.current = false;
+    if (!canAnimateScrollToPanel.current) {
+      canAnimateScrollToPanel.current = true;
+      return;
     }
-  }, [value]);
+
+    const index = tabsRef.current.valueToIndex.get(value)!; 
+    canChangeTabRef.current = false;
+    tabPanelsEl.style.scrollSnapType = "none";
+    animateScrollTo([index * tabPanelsEl.getBoundingClientRect().width, 0], {
+      elementToScroll: tabPanelsEl,
+      minDuration: 500,
+      cancelOnUserAction: false,
+      maxDuration: 1000,
+      easing: easeInOutCubic,
+    }).then((hasScrolledToPosition) => {
+      canChangeTabRef.current = true;
+      if (hasScrolledToPosition) {
+        tabPanelsEl.style.scrollSnapType = "x mandatory";
+
+        // On ios < 15, setting scroll-snap-type resets the scroll position
+        // so we need to reajust it to where it was before.
+        tabPanelsEl.scrollTo(
+          index * tabPanelsEl.clientWidth,
+          0
+        );
+      }
+
+    }).catch(() => {
+        tabPanelsEl.style.scrollSnapType = "x mandatory";
+    });
+  }, [value, tabPanelsRef]);
 
   const onScroll = useCallback((e: any) => {
     // Total amount of pixels scrolled in the scroll container
@@ -214,11 +216,13 @@ export default function useReactiveTabIndicator({
 
     const index = tabsRef.current.valueToIndex.get(valueRef.current);
 
-    if (preemptive && !isTouchingRef.current && closestTabPanelIndex !== index && !shouldSkipSettingIndexRef.current) {
+    const isSnapped = relativeScroll % 1 === 0;
+
+    if (preemptive && !isSnapped && !isTouchingRef.current && closestTabPanelIndex !== index && canChangeTabRef.current) {
       startTransition(() => {
-        setValue(getKeyByValue(tabsRef.current.valueToIndex, closestTabPanelIndex));
-        shouldSkipForcedScrollRef.current = true;
-        shouldSkipSettingIndexRef.current = true;
+        onChange(getKeyByValue(tabsRef.current.valueToIndex, closestTabPanelIndex));
+        canAnimateScrollToPanel.current = false;
+        canChangeTabRef.current = false;
       })
     }
 
@@ -279,15 +283,14 @@ export default function useReactiveTabIndicator({
           visibility: 'visible'
         }));
       })
-    } else if (!shouldSkipSettingIndexRef.current) {
-      shouldSkipForcedScrollRef.current = true;
-      
+    } else if (canChangeTabRef.current) {
+      canAnimateScrollToPanel.current = false;
       startTransition(() => {
-        setValue(getKeyByValue(tabsRef.current.valueToIndex, currentTabIndex));
+        onChange(getKeyByValue(tabsRef.current.valueToIndex, currentTabIndex));
         setTabIndicatorStyle((style: React.CSSProperties) => ({...style, width: currentTab.clientWidth}));
       })
      }
-  }, [lockScrollWhenSwiping, preemptive]);
+  }, [lockScrollWhenSwiping, preemptive, tabPanelsRef]);
  
   
 
@@ -297,30 +300,30 @@ export default function useReactiveTabIndicator({
     return () => {
       tabPanelsRef.current?.removeEventListener("scroll", onScroll);
     };
-  }, [onScroll]);
+  }, [onScroll, tabPanelsRef]);
 
   // Effect runs when the scroll container width changes, e.g. mobile orientation changed.
   // This effect will also run once after mount for initial scroll synchronization.
   useEffect(() => {
-    if (tabPanelsRef.current) {
-      const index = tabsRef.current.valueToIndex.get(valueRef.current);
+    if (!tabPanelsRef.current) return;
 
-      requestAnimationFrame(() => {
-        // This will trigger a scroll event, which will be handled by our scroll handler.
-        // It's wrapped within a raf because sometimes Safari randomly just refuses to
-        // to generate the scroll event after the initial page load, maybe a timing/rendering issue,
-        // which happens sporadically.
-        tabPanelsRef.current!.scrollLeft = index * tabPanelsClientWidth!;
-      })
+    const index = tabsRef.current.valueToIndex.get(valueRef.current)!;
 
-      if (index === 0) {
-        // We need to force a scroll event here since setting scrollLeft
-        // to a number that dosen't cause scroll won't trigger are
-        // scroll listener. 
-        tabPanelsRef.current.dispatchEvent(new CustomEvent('scroll'));
-      }
+    requestAnimationFrame(() => {
+      // This will trigger a scroll event, which will be handled by our scroll handler.
+      // It's wrapped within a raf because sometimes Safari randomly just refuses to
+      // to generate the scroll event after the initial page load, maybe a timing/rendering issue,
+      // which happens sporadically.
+      tabPanelsRef.current!.scrollLeft = index * tabPanelsClientWidth!;
+    })
+
+    if (index === 0) {
+      // We need to force a scroll event here since setting scrollLeft
+      // to a number that dosen't cause scroll won't trigger are
+      // scroll listener. 
+      tabPanelsRef.current.dispatchEvent(new CustomEvent('scroll'));
     }
-  }, [tabPanelsClientWidth]);
+  }, [tabPanelsClientWidth, tabPanelsRef]);
 
 
   return { tabIndicatorStyle, tabIndicatorRef, tabsRef };
