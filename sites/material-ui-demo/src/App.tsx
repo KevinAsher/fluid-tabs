@@ -21,32 +21,6 @@ const ContentContainer = styled.div`
   padding-top: 0;
 `;
 
-const StyledTabPanels = styled.div`
-  /* width: 100vw; */
-  scroll-snap-type: x mandatory;
-  display: flex;
-  -webkit-overflow-scrolling: touch;
-  // scroll-snap-stop: always;
-  overflow-x: scroll;
-  &::-webkit-scrollbar {
-    display: none;
-  }
-`;
-
-const StyledTabPanel = styled.div`
-  /* min-width: 100vw; */
-  min-width: 100%;
-  min-height: 10rem;
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
-  &[hidden] {
-    display: block !important;
-  }
-  &:focus {
-    outline: none;
-  }
-`;
-
 const StyledContent = styled.div`
   h1 {
     font-size: 1.5rem;
@@ -221,6 +195,55 @@ function AppCustomTabs({tabPanelsRef, children}) {
 }
 
 function AppMuiTabs({tabPanelsRef, children}) {
+  // const routeMatch = useMatch({
+  //   path: '/:tab',
+  //   end: true,
+  //   caseSensitive: true
+  // });
+
+  // const navigate = useNavigate();
+  const [value, setValue] = useState(1);
+  const {
+    tabIndicatorStyle,
+    tabIndicatorRef,
+    tabsRef
+  } = useReactiveTabIndicator({ 
+    // value: routeMatch.params.tab, 
+    // onChange: (val) => navigate(`./${val}`), 
+    value, 
+    onChange: setValue,
+    tabPanelsRef,
+    preemptive: true,
+    lockScrollWhenSwiping: false,
+  });
+
+  const onChange = React.useCallback((e, val) => {
+    setValue(val);
+  }, []);
+
+
+  let tabIndicatorProps = React.useMemo(() => ({
+    ref: tabIndicatorRef,
+    style: tabIndicatorStyle
+  }), [tabIndicatorStyle]);
+
+  return (
+    <FluidTabs 
+      component={TabsMemo} 
+      onChange={onChange}
+      value={value} 
+      // value={routeMatch.params.tab} 
+      TabIndicatorProps={tabIndicatorProps} 
+      variant="scrollable"
+      scrollButtons={false}
+      tabsRef={tabsRef}>
+      {children}
+    </FluidTabs>
+  );
+}
+
+
+function AppMuiTabsWithRoutes({tabPanelsRef, children}) {
   const routeMatch = useMatch({
     path: '/:tab',
     end: true,
@@ -228,7 +251,7 @@ function AppMuiTabs({tabPanelsRef, children}) {
   });
 
   const navigate = useNavigate();
-  // const [value, setValue] = useState(1);
+  // const [value, setValue] = useState("2");
   const {
     tabIndicatorStyle,
     tabIndicatorRef,
@@ -240,12 +263,12 @@ function AppMuiTabs({tabPanelsRef, children}) {
     // onChange: setValue,
     tabPanelsRef,
     preemptive: true,
-    lockScrollWhenSwiping: true,
+    // lockScrollWhenSwiping: true,
   });
 
-  const onChange = React.useCallback((e, val) => {
-    setValue(val);
-  }, []);
+  // const onChange = React.useCallback((e, val) => {
+  //   setValue(val);
+  // }, []);
 
 
   let tabIndicatorProps = React.useMemo(() => ({
@@ -268,8 +291,6 @@ function AppMuiTabs({tabPanelsRef, children}) {
   );
 }
 
-
-
 function AppInner() {
   const tabPanelsRef = React.useRef(null);
 
@@ -288,30 +309,30 @@ function AppInner() {
           <CustomTabMemo component={Link} to="/vibrant-beach" value="vibrant-beach" label="Vibrant Beach" key="3" />
           <CustomTabMemo component={Link} to="/hidden-waterfall" value="hidden-waterfall" label="Hidden Waterfall" key="4" />
         </AppCustomTabs> */}
-        <AppMuiTabs tabPanelsRef={tabPanelsRef}>
+        {/* <AppMuiTabsWithRoutes tabPanelsRef={tabPanelsRef}>
           <TabMemo component={Link} to="/tranquil-forest" value="tranquil-forest" label="Tranquil Forrest" key="1" />
           <TabMemo component={Link} to="/p" value="p" label="P" key="2" />
           <TabMemo component={Link} to="/vibrant-beach" value="vibrant-beach" label="Vibrant Beach" key="3" />
           <TabMemo component={Link} to="/hidden-waterfall" value="hidden-waterfall" label="Hidden Waterfall" key="4" />
-        </AppMuiTabs>
-        {/* <AppMuiTabs tabPanelsRef={tabPanelsRef}>
+        </AppMuiTabsWithRoutes> */}
+        <AppMuiTabs tabPanelsRef={tabPanelsRef}>
           <TabMemo label="Tranquil Forrest" key="1" />
           <TabMemo label="P" key="2" />
           <TabMemo label="Vibrant Beach" key="3" />
           <TabMemo label="Hidden Waterfall" key="4" />
-        </AppMuiTabs> */}
+        </AppMuiTabs>
         <FluidTabPanels ref={tabPanelsRef}>
             {tabs.map(({ img, title }, i) =>
-              <Routes>
-                <Route 
-                  path={"*"} 
-                  element={
+              // <Routes>
+              //   <Route 
+              //     path={"*"} 
+              //     element={
                     <FluidTabPanel>
                       <StyledTabPanelContent img={img} title={title} />
                     </FluidTabPanel>
-                  }
-                  />
-              </Routes>
+              //     }
+              //     />
+              // </Routes>
             )}
         </FluidTabPanels>
       </div>
