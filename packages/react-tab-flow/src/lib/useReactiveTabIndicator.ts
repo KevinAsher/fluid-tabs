@@ -5,48 +5,12 @@ import {
   Direction,
   getKeyByValue,
   useElementWidth,
-  useIsTouchingRef
+  useIsTouchingRef,
+  getWorkingTabs
 } from './utils' ;
 
 // Simple fallback for React versions before 18
 let startTransition = React.startTransition || (cb => cb());
-
-interface GetWorkingTabsProps {
-  previousTab: HTMLElement | null
-  direction: Direction
-  relativeScroll: number
-  previousRelativeScroll: number
-  tabs: HTMLElement[]
-}
-
-interface WorkingTabs {
-  currentTab: HTMLElement
-  nextTab: HTMLElement
-}
-
-export function getWorkingTabs({
-  previousTab, 
-  tabs, 
-  direction, 
-  relativeScroll, 
-  previousRelativeScroll
-}: GetWorkingTabsProps): WorkingTabs {
-  let currentTab = previousTab;
-
-  let scrollTabIndex = Math.trunc(relativeScroll);
-  let previousScrollTabIndex = Math.trunc(previousRelativeScroll);
-
-  if (relativeScroll === previousRelativeScroll) {
-    currentTab = tabs[scrollTabIndex];
-  } else if (direction === Direction.RIGHT && scrollTabIndex > previousScrollTabIndex) {
-    currentTab = tabs[scrollTabIndex];
-  } else if (direction === Direction.LEFT && (scrollTabIndex < previousScrollTabIndex || relativeScroll % 1 === 0)) {
-    currentTab = tabs[previousScrollTabIndex];
-  }
-
-  let nextTab = tabs[direction === Direction.RIGHT ? Math.ceil(relativeScroll) : Math.floor(relativeScroll)];
-  return { currentTab: currentTab!, nextTab }
-}
 
 
 // Depending on the device pixel ratio, a scroll container might not be able
@@ -65,12 +29,12 @@ export interface ReactiveTabIndicatorHookProps {
   /**
    * State that controls the current active tab.
    */
-  value: string | number, 
+  value: any, 
 
   /**
    * Setter to control the current active tab.
    */
-  onChange: (val: string | number | undefined) => any, 
+  onChange: (val: any) => any, 
 
   /**
    * Preemptively changes the current active tab once we scrolled more then 50% of 
@@ -83,7 +47,7 @@ export interface ReactiveTabIndicatorHookProps {
    * it triggers a state update while scrolling.
    * @default false
    */
-  preemptive: boolean,
+  preemptive?: boolean,
   
   /**
    * Disables vertical scrolling, this handles the case when a snap scroll is interrupted by a vertical
@@ -99,12 +63,14 @@ export interface ReactiveTabIndicatorHookProps {
   animateScrollToOptions?: IOptions,
 }
 
-interface TabsRef {
-  nodes: HTMLElement[],
-  valueToIndex: Map<string | number, number>
+interface TabsRef<T> {
+  nodes: T[],
+  valueToIndex: Map<any, number>
 };
 
-export interface ReactiveTabIndicatorHookValues {
+type DOMElement<T extends HTMLElement> = T;
+
+export interface ReactiveTabIndicatorHookValues<I, T=I> {
   /**
    * Required CSS styles for the tab indicator element.
    */
@@ -113,13 +79,13 @@ export interface ReactiveTabIndicatorHookValues {
   /**
    * A ref to the tab indicator element.
    */
-  tabIndicatorRef: React.RefObject<HTMLElement>, 
+  tabIndicatorRef: React.RefObject<I>, 
   
   /**
    * A special ref useed as an instance variable required to get the tab elements,
    * indexes and values.
    */
-  tabsRef: React.RefObject<TabsRef>;
+  tabsRef: React.RefObject<TabsRef<T>>;
 }
 
 const initialTabIndicatorStyle: React.CSSProperties = {
@@ -133,14 +99,15 @@ const initialTabIndicatorStyle: React.CSSProperties = {
   visibility: 'hidden'
 };
 
-export default function useReactiveTabIndicator({ 
+export default function useReactiveTabIndicator<I extends HTMLElement, T extends HTMLElement = I>
+({ 
   tabPanelsRef, 
   value, 
   onChange, 
   preemptive=false, 
   lockScrollWhenSwiping=false,
   animateScrollToOptions,
-}: ReactiveTabIndicatorHookProps) : ReactiveTabIndicatorHookValues {
+}: ReactiveTabIndicatorHookProps) : ReactiveTabIndicatorHookValues<I, T> {
   const [tabIndicatorStyle, setTabIndicatorStyle] = useState<React.CSSProperties>(initialTabIndicatorStyle);
   const previousRelativeScrollRef = useRef(0);
   const previousTabRef = useRef<HTMLElement | null>(null);
@@ -148,8 +115,8 @@ export default function useReactiveTabIndicator({
   const canAnimateScrollToPanel = useRef<boolean>(false);
   const tabPanelsClientWidth = useElementWidth(tabPanelsRef);
   const isTouchingRef = useIsTouchingRef(tabPanelsRef);
-  const tabIndicatorRef = useRef<HTMLElement | null>(null);
-  const tabsRef = useRef({nodes: [], valueToIndex: new Map<string | number, number>()});
+  const tabIndicatorRef = useRef<I>(null);
+  const tabsRef = useRef({nodes: [] as T[], valueToIndex: new Map<any, number>()});
   const valueRef = useRef(value);
 
   useLayoutEffect(() => {
@@ -173,7 +140,9 @@ export default function useReactiveTabIndicator({
   useEffect(() => {
     canChangeTabRef.current = true;
 
-    const tabPanelsEl = tabPanelsRef.current!;
+    const tabPanelsEl = tabPanelsRef.current;
+
+    if (!tabPanelsEl) return;
 
     if (!canAnimateScrollToPanel.current) {
       canAnimateScrollToPanel.current = true;
@@ -184,6 +153,7 @@ export default function useReactiveTabIndicator({
     const index = tabsRef.current.valueToIndex.get(value)!; 
     canChangeTabRef.current = false;
     tabPanelsEl.style.scrollSnapType = "none";
+
     animateScrollTo([index * tabPanelsEl.getBoundingClientRect().width, 0], {
       minDuration: 500,
       maxDuration: 800,
@@ -194,14 +164,12 @@ export default function useReactiveTabIndicator({
     }).then((hasScrolledToPosition) => {
       if (hasScrolledToPosition) {
         canChangeTabRef.current = true;
+        
         tabPanelsEl.style.scrollSnapType = "x mandatory";
 
         // On ios < 15, setting scroll-snap-type resets the scroll position
         // so we need to reajust it to where it was before.
-        tabPanelsEl.scrollTo(
-          index * tabPanelsEl.getBoundingClientRect().width,
-          0
-        );
+        tabPanelsEl.scrollLeft = index * tabPanelsEl.getBoundingClientRect().width;
       }
 
     }).catch(() => {
@@ -264,8 +232,8 @@ export default function useReactiveTabIndicator({
       const scaleXCss = `scaleX(${scaleX})`;
       const translateXCss = `translateX(${translateX}px)`;
 
-      tabIndicatorRef.current!.style.transform = `${translateXCss} ${scaleXCss}`;
-      if (lockScrollWhenSwiping) tabPanelsRef.current!.style.touchAction = currentTabIndex !== destinationIndex ? 'pan-x' : 'auto';
+      if(tabIndicatorRef.current) tabIndicatorRef.current.style.transform = `${translateXCss} ${scaleXCss}`;
+      if (lockScrollWhenSwiping && tabPanelsRef.current) tabPanelsRef.current.style.touchAction = currentTabIndex !== destinationIndex ? 'pan-x' : 'auto';
     });
 
     // set previous relative scroll for the next scroll event
@@ -284,9 +252,9 @@ export default function useReactiveTabIndicator({
         This is only for when the indicator is passing by other tabs until it reaches it's
         destination tab. Once it reaches it, we re-sync the elements width with it's actual state.
       */
-      tabIndicatorRef.current!.style.width = currentTab.clientWidth + 'px';
+      if(tabIndicatorRef.current) tabIndicatorRef.current.style.width = currentTab.clientWidth + 'px';
 
-      if (lockScrollWhenSwiping) tabPanelsRef.current!.style.touchAction = 'auto';
+      if (lockScrollWhenSwiping && tabPanelsRef.current) tabPanelsRef.current.style.touchAction = 'auto';
     })
 
     if (destinationIndex === currentTabIndex) {
@@ -329,7 +297,9 @@ export default function useReactiveTabIndicator({
       // It's wrapped within a raf because sometimes Safari randomly just refuses to
       // to generate the scroll event after the initial page load, maybe a timing/rendering issue,
       // which happens sporadically.
-      tabPanelsRef.current!.scrollLeft = index * tabPanelsClientWidth!;
+      if (tabPanelsRef.current) {
+        tabPanelsRef.current!.scrollLeft = index * tabPanelsClientWidth!;
+      }
     })
 
     if (index === 0) {

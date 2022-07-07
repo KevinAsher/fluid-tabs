@@ -2,13 +2,16 @@ import React from 'react';
 import {type ReactiveTabIndicatorHookValues} from './useReactiveTabIndicator';
 
 interface Props {
-  tabsRef: ReactiveTabIndicatorHookValues["tabsRef"];
+  tabsRef: ReactiveTabIndicatorHookValues<HTMLElement>["tabsRef"];
   children: JSX.Element[];
   component: React.ElementType;
-  rest: any;
 } 
 
-const FluidTabs = React.forwardRef(({ tabsRef, children, component: Component, ...rest }: Props, ref) => {
+const FluidTabs = React.forwardRef((props: Props, ref) => {
+  const { tabsRef, children, component: Component, ...rest } = props;
+  // TODO: refactor this to a better ref callback.
+  // For a good example using ref callback (see Deep Dive section):
+  // https://beta.reactjs.org/learn/manipulating-the-dom-with-refs#example-scrolling-to-an-element
   const addToRefs = React.useCallback((el: HTMLElement | null) => {
     if (el && !tabsRef.current!.nodes.includes(el)) {
       tabsRef.current!.nodes.push(el);
@@ -16,7 +19,7 @@ const FluidTabs = React.forwardRef(({ tabsRef, children, component: Component, .
   }, []);
 
   const childrenWithRef = React.Children.map(children, (child, index) => {
-    return React.cloneElement(child, {ref: addToRefs}, undefined);
+    return React.cloneElement(child, {ref: addToRefs});
   });
 
   // Latest ref pattern - keep child props in sync with ref data
