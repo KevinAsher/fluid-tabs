@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useRef } from "react";
 // import { Tabs, Tab, createMuiTheme } from "@material-ui/core";
-import { Tabs, Tab, createMuiTheme } from "@mui/material";
+import { Tabs, Tab, createMuiTheme, ButtonBase } from "@mui/material";
 // import { ThemeProvider } from "@material-ui/styles";
 import { ThemeProvider, useThemeProps } from "@mui/material/styles";
 import styled from "styled-components";
@@ -117,6 +117,10 @@ const CustomTab = React.forwardRef(({label, selected, value, onChange, style, co
         whiteSpace: 'nowrap',
         flexShrink: 0,
         textDecoration: 'none',
+        letterSpacing: '0.02857em',
+        fontSize: '0.875rem',
+        // marginLeft: 40,
+        // marginRight: 40,
         ...style
       }}
       {...other}
@@ -161,7 +165,7 @@ function AppCustomTabs({tabPanelsRef, children}) {
   // });
 
   // const navigate = useNavigate();
-  const [value, setValue] = useState(1);
+  const [value, setValue] = useState(0);
   const {
     tabIndicatorStyle,
     tabIndicatorRef,
@@ -202,7 +206,7 @@ function AppMuiTabs({tabPanelsRef, children}) {
   // });
 
   // const navigate = useNavigate();
-  const [value, setValue] = useState(1);
+  const [value, setValue] = useState(0);
   const {
     tabIndicatorStyle,
     tabIndicatorRef,
@@ -297,12 +301,12 @@ function AppInner() {
   return (
     <ThemeProvider theme={theme}>
       <div className="App">
-        {/* <AppCustomTabs tabPanelsRef={tabPanelsRef}>
-          <CustomTabMemo label="Tranquil Forrest" key="1" />
-          <CustomTabMemo label="P" key="2" />
-          <CustomTabMemo label="Vibrant Beach" key="3" />
-          <CustomTabMemo label="Hidden Waterfall" key="4" />
-        </AppCustomTabs> */}
+        <AppCustomTabs tabPanelsRef={tabPanelsRef}>
+          <CustomTabMemo component={ButtonBase} label="Tranquil Forrest" key="1" />
+          <CustomTabMemo component={ButtonBase} label="P" key="2" />
+          <CustomTabMemo component={ButtonBase} label="Vibrant Beach" key="3" />
+          <CustomTabMemo component={ButtonBase} label="Hidden Waterfall" key="4" />
+        </AppCustomTabs>
         {/* <AppCustomTabs tabPanelsRef={tabPanelsRef}>
           <CustomTabMemo component={Link} to="/tranquil-forest" value="tranquil-forest" label="Tranquil Forrest" key="1" />
           <CustomTabMemo component={Link} to="/p" value="p" label="P" key="2" />
@@ -315,13 +319,13 @@ function AppInner() {
           <TabMemo component={Link} to="/vibrant-beach" value="vibrant-beach" label="Vibrant Beach" key="3" />
           <TabMemo component={Link} to="/hidden-waterfall" value="hidden-waterfall" label="Hidden Waterfall" key="4" />
         </AppMuiTabsWithRoutes> */}
-        <AppMuiTabs tabPanelsRef={tabPanelsRef}>
+        {/* <AppMuiTabs tabPanelsRef={tabPanelsRef}>
           <TabMemo label="Tranquil Forrest" key="1" />
           <TabMemo label="P" key="2" />
           <TabMemo label="Vibrant Beach" key="3" />
           <TabMemo label="Hidden Waterfall" key="4" />
-        </AppMuiTabs>
-        <FluidTabPanels ref={tabPanelsRef}>
+        </AppMuiTabs> */}
+        <FluidTabPanels ref={tabPanelsRef} id="scrollable-container">
             {tabs.map(({ img, title }, i) =>
               // <Routes>
               //   <Route 
