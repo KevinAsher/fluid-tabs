@@ -2,7 +2,7 @@
 /// <reference types="vite/client" />
 
 import react from '@vitejs/plugin-react';
-import path from 'node:path';
+import path from 'path';
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 
