@@ -26,11 +26,13 @@ export default defineConfig({
       fileName: (format) => `react-tab-flow.${format}.js`,
     },
     rollupOptions: {
-      external: ['react', 'react-dom'],
+      external: ['react', 'react-dom', 'react/jsx-runtime', 'animated-scroll-to'],
       output: {
         globals: {
           react: 'React',
           'react-dom': 'ReactDOM',
+          'react/jsx-runtime': 'jsxRuntime',
+          'animated-scroll-to': 'animateScrollTo'
         },
       },
     },
