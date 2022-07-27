@@ -25,9 +25,7 @@ export default function getWorkingTabs({
   let scrollTabIndex = Math.trunc(relativeScroll);
   let previousScrollTabIndex = Math.trunc(previousRelativeScroll);
 
-  if (relativeScroll === previousRelativeScroll) {
-    currentTab = tabs[scrollTabIndex];
-  } else if (direction === Direction.RIGHT && scrollTabIndex > previousScrollTabIndex) {
+  if (direction === Direction.RIGHT && scrollTabIndex > previousScrollTabIndex) {
     currentTab = tabs[scrollTabIndex];
   } else if (direction === Direction.LEFT && (scrollTabIndex < previousScrollTabIndex || relativeScroll % 1 === 0)) {
     currentTab = tabs[previousScrollTabIndex];

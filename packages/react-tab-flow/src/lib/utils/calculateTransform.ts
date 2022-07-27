@@ -41,11 +41,7 @@ export default function calculateTransform({
       // Swiping to the current tab
       currentTabScrollProgress = direction === Direction.RIGHT ? 1 - (relativeScroll % 1 || 1) : relativeScroll % 1;
 
-      let wasNextTabIndex = clamp(
-        direction === Direction.LEFT ? currentTabIndex + 1 : currentTabIndex - 1, 
-        0, 
-        tabs.length - 1
-      );
+      let wasNextTabIndex = direction === Direction.LEFT ? currentTabIndex + 1 : currentTabIndex - 1;
 
       nextTab = tabs[wasNextTabIndex];
     }

@@ -165,7 +165,7 @@ function AppCustomTabs({tabPanelsRef, children}) {
   // });
 
   // const navigate = useNavigate();
-  const [value, setValue] = useState(0);
+  const [value, setValue] = useState(1);
   const {
     tabIndicatorStyle,
     tabIndicatorRef,
@@ -206,7 +206,7 @@ function AppMuiTabs({tabPanelsRef, children}) {
   // });
 
   // const navigate = useNavigate();
-  const [value, setValue] = useState(0);
+  const [value, setValue] = useState(1);
   const {
     tabIndicatorStyle,
     tabIndicatorRef,

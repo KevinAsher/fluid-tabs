@@ -8,6 +8,7 @@ import {
   useIsTouchingRef,
   getWorkingTabs
 } from './utils' ;
+import { flushSync } from "react-dom";
 
 // Simple fallback for React versions before 18
 let startTransition = React.startTransition || (cb => cb());
@@ -109,7 +110,7 @@ export default function useReactiveTabIndicator<I extends HTMLElement, T extends
   animateScrollToOptions,
 }: ReactiveTabIndicatorHookProps) : ReactiveTabIndicatorHookValues<I, T> {
   const [tabIndicatorStyle, setTabIndicatorStyle] = useState<React.CSSProperties>(initialTabIndicatorStyle);
-  const previousRelativeScrollRef = useRef(0);
+  const previousRelativeScrollRef = useRef<number | null>(null);
   const previousTabRef = useRef<HTMLElement | null>(null);
   const canChangeTabRef = useRef<boolean>(true);
   const canAnimateScrollToPanel = useRef<boolean>(false);
@@ -191,14 +192,24 @@ export default function useReactiveTabIndicator<I extends HTMLElement, T extends
     // Same as relativeScrollRaw, but with it's value snapped to the closest tab panel index when it's very close.
     const relativeScroll = Math.abs(closestIndexFromScrollPosition - relativeScrollRaw) < SCROLL_RATIO_LIMIT ? closestIndexFromScrollPosition : relativeScrollRaw;
 
-    const direction = previousRelativeScrollRef.current <= relativeScroll ? Direction.RIGHT : Direction.LEFT;
+    // Only initialize required ref values on initial scroll.
+    if (previousRelativeScrollRef.current === null) {
+      previousRelativeScrollRef.current = relativeScroll;
+      previousTabRef.current = tabsRef.current.nodes[Math.trunc(relativeScroll)];
+      return;
+    }
+
+    // skip if there wasn't a change on scroll
+    if (relativeScroll === previousRelativeScrollRef.current) return;
 
     // If we are overscroll beyond the boundaries of the scroll container, we just return and do nothing (e.g. Safari browser).
     if (relativeScroll < 0 || relativeScroll > tabsRef.current.nodes.length - 1) return;
 
+    const direction = previousRelativeScrollRef.current <= relativeScroll ? Direction.RIGHT : Direction.LEFT;
+
     const destinationIndex = tabsRef.current.valueToIndex.get(valueRef.current);
 
-    const isSnapped = relativeScroll % 1 === 0;
+    const isSnapped = relativeScroll % 1 === 0 && relativeScroll === destinationIndex;
 
     if (preemptive && !isSnapped && !isTouchingRef.current && closestIndexFromScrollPosition !== destinationIndex && canChangeTabRef.current) {
       startTransition(() => {
@@ -255,7 +266,7 @@ export default function useReactiveTabIndicator<I extends HTMLElement, T extends
       if(tabIndicatorRef.current) tabIndicatorRef.current.style.width = currentTab.clientWidth + 'px';
 
       if (lockScrollWhenSwiping && tabPanelsRef.current) tabPanelsRef.current.style.touchAction = 'auto';
-    })
+    });
 
     if (destinationIndex === currentTabIndex) {
       // we have reached our destination tab, resync width as previously mentioned.
@@ -263,7 +274,6 @@ export default function useReactiveTabIndicator<I extends HTMLElement, T extends
         setTabIndicatorStyle((style: React.CSSProperties) => ({
           ...style, 
           width: currentTab.clientWidth, 
-          visibility: 'visible'
         }));
       })
     } else if (canChangeTabRef.current) {
@@ -285,12 +295,28 @@ export default function useReactiveTabIndicator<I extends HTMLElement, T extends
     };
   }, [onScroll, tabPanelsRef]);
 
+
   // Effect runs when the scroll container width changes, e.g. mobile orientation changed.
   // This effect will also run once after mount for initial scroll synchronization.
   useEffect(() => {
-    if (!tabPanelsRef.current) return;
+    if (!tabPanelsRef.current || !tabIndicatorRef.current) return;
 
     const index = tabsRef.current.valueToIndex.get(valueRef.current)!;
+    const currentTab = tabsRef.current.nodes[index];
+
+    tabIndicatorRef.current.style.transform = `translateX(${currentTab.offsetLeft}px) scaleX(1)`;
+
+    // React dosen't allow to run flushSync within a lifecycle callback, so we need to wrap within
+    // a promise to have it called in the next microtask.
+    Promise.resolve().then(() => {
+      flushSync(() => {
+        setTabIndicatorStyle((style: React.CSSProperties) => ({
+          ...style, 
+          width: currentTab.clientWidth,
+          visibility: 'visible'
+        }));
+      })
+    });
 
     requestAnimationFrame(() => {
       // This will trigger a scroll event, which will be handled by our scroll handler.
@@ -308,7 +334,7 @@ export default function useReactiveTabIndicator<I extends HTMLElement, T extends
       // scroll listener. 
       tabPanelsRef.current.dispatchEvent(new CustomEvent('scroll'));
     }
-  }, [tabPanelsClientWidth, tabPanelsRef]);
+  }, [tabPanelsClientWidth, tabPanelsRef, tabIndicatorRef]);
 
 
   return { tabIndicatorStyle, tabIndicatorRef, tabsRef };
