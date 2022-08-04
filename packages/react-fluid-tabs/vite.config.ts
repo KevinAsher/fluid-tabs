@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
+import VitePluginStyleInject from 'vite-plugin-style-inject';
 
 export default defineConfig({
   plugins: [
@@ -12,6 +13,11 @@ export default defineConfig({
     dts({
       insertTypesEntry: true,
     }),
+
+    // TODO: watch for official solution for styles injection for libraries in vite:
+    // https://github.com/vitejs/vite/issues/1579#issuecomment-1185532227
+    // For now, we use this plugin.
+    VitePluginStyleInject(),
   ],
   test: {
     globals: true,

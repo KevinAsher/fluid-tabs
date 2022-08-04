@@ -4466,6 +4466,7 @@ __metadata:
     typescript: ^4.7.4
     vite: ^3.0.3
     vite-plugin-dts: ^1.4.0
+    vite-plugin-style-inject: ^0.0.1
     vitest: ^0.19.1
   peerDependencies:
     react: ^18.2.0
@@ -5438,6 +5439,15 @@ __metadata:
   peerDependencies:
     vite: ">=2.4.4"
   checksum: 0a1e179e4ac60cc109b28c63efb741113d3e8fbf01a50f5dbad702af94e89c33c6dc9885f014cfba7f4bc7b49db60d779c4a94a679fccdad9bcf20cac3d42c05
+  languageName: node
+  linkType: hard
+
+"vite-plugin-style-inject@npm:^0.0.1":
+  version: 0.0.1
+  resolution: "vite-plugin-style-inject@npm:0.0.1"
+  peerDependencies:
+    vite: ^2.0.0
+  checksum: aa18fafeaa3be56c163d9e0a138843060bb1e9443cc0edaa7da17ebbcfc3da56da6e29cd793754a232cadab00505dafb0338a343e74dccdd736544a4686f7f7e
   languageName: node
   linkType: hard
 
