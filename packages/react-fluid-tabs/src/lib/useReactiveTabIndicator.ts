@@ -9,6 +9,8 @@ import {
   getWorkingTabs
 } from './utils' ;
 import { flushSync } from "react-dom";
+import TabIndicatorManager from "./TabIndicatorManager";
+import useRefCallback from "./useRefCallback";
 
 // Simple fallback for React versions before 18
 let startTransition = React.startTransition || (cb => cb());
@@ -97,7 +99,7 @@ const initialTabIndicatorStyle: React.CSSProperties = {
   // Make it initially invisible, and only made visible after the first scroll event
   // which happens on mount. This is used to avoid seeing the tab indicator
   // jump around when the component mounts.
-  visibility: 'hidden'
+  // visibility: 'hidden'
 };
 
 export default function useReactiveTabIndicator<I extends HTMLElement, T extends HTMLElement = I>
@@ -110,27 +112,67 @@ export default function useReactiveTabIndicator<I extends HTMLElement, T extends
   animateScrollToOptions,
 }: ReactiveTabIndicatorHookProps) : ReactiveTabIndicatorHookValues<I, T> {
   const [tabIndicatorStyle, setTabIndicatorStyle] = useState<React.CSSProperties>(initialTabIndicatorStyle);
-  const previousRelativeScrollRef = useRef<number | null>(null);
-  const previousTabRef = useRef<HTMLElement | null>(null);
-  const canChangeTabRef = useRef<boolean>(true);
-  const canAnimateScrollToPanel = useRef<boolean>(false);
-  const tabPanelsClientWidth = useElementWidth(tabPanels);
-  const isTouchingRef = useIsTouchingElementRef(tabPanels);
-  const tabIndicatorRef = useRef<I>(null);
+  // const previousRelativeScrollRef = useRef<number | null>(null);
+  // const previousTabRef = useRef<HTMLElement | null>(null);
+  // const canChangeTabRef = useRef<boolean>(true);
+  // const canAnimateScrollToPanel = useRef<boolean>(false);
+  // const tabPanelsClientWidth = useElementWidth(tabPanels);
+  // const isTouchingRef = useIsTouchingElementRef(tabPanels);
+  const [tabIndicator, tabIndicatorRef] = useRefCallback();
+  // const valueRef = useRef(value);
   const tabsRef = useRef({nodes: [] as T[], valueToIndex: new Map<any, number>()});
-  const valueRef = useRef(value);
+  const tabIndicatorManagerRef = useRef<TabIndicatorManager | null>(null);
 
-  useLayoutEffect(() => {
+
+  useEffect(() => {
+    if (!tabIndicator || !tabPanels || !tabsRef.current) return;
+    console.log('new tab manager')
+
+    tabIndicatorManagerRef.current = new TabIndicatorManager(
+      value,
+      tabIndicator,
+      tabPanels,
+      tabsRef.current.nodes,
+      tabsRef.current.valueToIndex,
+      (value) => {
+        startTransition(() => {
+          // console.log('startTransition', value, 'onChange');
+          onChange(value);
+        })
+      },
+      () => {
+        // Force indicator state style update on the current frame.
+        // React dosen't allow to run flushSync within a lifecycle callback, so we need to wrap within
+        // a promise to have it called in the next microtask.
+
+        // console.log('indicator style update');
+        Promise.resolve().then(() => {
+          flushSync(() => {
+            setTabIndicatorStyle((style: React.CSSProperties) => ({
+              ...style, 
+              width: tabIndicatorManagerRef.current?.getCurrentTab().clientWidth,
+              visibility: 'visible'
+            }));
+          })
+        });
+
+      }
+    );
+
+    return () => tabIndicatorManagerRef.current?.cleanup();
+  }, [tabPanels, tabIndicator, tabsRef]);
+
+  // useLayoutEffect(() => {
     // Don't let animation play on mount.
     // Setting default value at ref initialization above is not enough since React 18.
-    canAnimateScrollToPanel.current = false;
-  }, []);
+    // canAnimateScrollToPanel.current = false;
+  // }, []);
 
   // Latest ref pattern - we use it here to have latest value on the scroll listener
   // to avoid recreating the scroll listener on tab change.
-  useLayoutEffect(() => {
-    valueRef.current = value;
-  });
+  // useLayoutEffect(() => {
+  //   valueRef.current = value;
+  // });
   
   // Run the below effect on tab change.
   // If a diferent tab was clicked, we need to synchronize the scroll position.
@@ -139,164 +181,130 @@ export default function useReactiveTabIndicator<I extends HTMLElement, T extends
   // We can't depend on tabPanelsClientWidth here because we don't want to trigger a scrolling animation
   // on width size change.
   useEffect(() => {
-    canChangeTabRef.current = true;
+    tabIndicatorManagerRef.current?.changeTab(value);
+  }, [value]);
 
-    if (!tabPanels) return;
+  // const onScroll = useCallback((e: any) => {
+  //   // Total amount of pixels scrolled in the scroll container
+  //   const scrollLeft = e.target.scrollLeft;
 
-    if (!canAnimateScrollToPanel.current) {
-      canAnimateScrollToPanel.current = true;
-      return;
-    }
-    
-    /* Animate scrolling to the relevant tab panel */
-    const index = tabsRef.current.valueToIndex.get(value)!; 
-    canChangeTabRef.current = false;
-    tabPanels.style.scrollSnapType = "none";
+  //   // Scroll progress relative to the panel, e.g., 0.4 means we scrolled 40% of the first panel.
+  //   // We can't use tabPanelsClientWidth here because we might get an outdated width from a screen orietation change
+  //   // which will cause a scroll before tabPanelsClientWidth gets a chance to update.
+  //   const relativeScrollRaw = scrollLeft / tabPanels!.getBoundingClientRect().width;
 
-    animateScrollTo([index * tabPanels.getBoundingClientRect().width, 0], {
-      minDuration: 500,
-      maxDuration: 800,
-      easing: easeInOutCubic,
-      ...animateScrollToOptions,
-      elementToScroll: tabPanels,
-      cancelOnUserAction: false,
-    }).then((hasScrolledToPosition) => {
-      if (hasScrolledToPosition) {
-        canChangeTabRef.current = true;
-        
-        tabPanels.style.scrollSnapType = "x mandatory";
+  //   const closestIndexFromScrollPosition = Math.round(relativeScrollRaw);
 
-        // On ios < 15, setting scroll-snap-type resets the scroll position
-        // so we need to reajust it to where it was before.
-        tabPanels.scrollLeft = index * tabPanels.getBoundingClientRect().width;
-      }
+  //   // Same as relativeScrollRaw, but with it's value snapped to the closest tab panel index when it's very close.
+  //   const relativeScroll = Math.abs(closestIndexFromScrollPosition - relativeScrollRaw) < SCROLL_RATIO_LIMIT ? closestIndexFromScrollPosition : relativeScrollRaw;
 
-    }).catch(() => {
-        tabPanels.style.scrollSnapType = "x mandatory";
-    });
-  }, [value, tabPanels]);
+  //   // Only initialize required ref values on initial scroll.
+  //   if (previousRelativeScrollRef.current === null) {
+  //     previousRelativeScrollRef.current = relativeScroll;
+  //     previousTabRef.current = tabsRef.current.nodes[Math.trunc(relativeScroll)];
+  //     return;
+  //   }
 
-  const onScroll = useCallback((e: any) => {
-    // Total amount of pixels scrolled in the scroll container
-    const scrollLeft = e.target.scrollLeft;
+  //   // skip if there wasn't a change on scroll
+  //   if (relativeScroll === previousRelativeScrollRef.current) return;
 
-    // Scroll progress relative to the panel, e.g., 0.4 means we scrolled 40% of the first panel.
-    // We can't use tabPanelsClientWidth here because we might get an outdated width from a screen orietation change
-    // which will cause a scroll before tabPanelsClientWidth gets a chance to update.
-    const relativeScrollRaw = scrollLeft / tabPanels!.getBoundingClientRect().width;
+  //   // If we are overscroll beyond the boundaries of the scroll container, we just return and do nothing (e.g. Safari browser).
+  //   if (relativeScroll < 0 || relativeScroll > tabsRef.current.nodes.length - 1) return;
 
-    const closestIndexFromScrollPosition = Math.round(relativeScrollRaw);
+  //   const direction = previousRelativeScrollRef.current <= relativeScroll ? Direction.RIGHT : Direction.LEFT;
 
-    // Same as relativeScrollRaw, but with it's value snapped to the closest tab panel index when it's very close.
-    const relativeScroll = Math.abs(closestIndexFromScrollPosition - relativeScrollRaw) < SCROLL_RATIO_LIMIT ? closestIndexFromScrollPosition : relativeScrollRaw;
+  //   const destinationIndex = tabsRef.current.valueToIndex.get(valueRef.current);
 
-    // Only initialize required ref values on initial scroll.
-    if (previousRelativeScrollRef.current === null) {
-      previousRelativeScrollRef.current = relativeScroll;
-      previousTabRef.current = tabsRef.current.nodes[Math.trunc(relativeScroll)];
-      return;
-    }
+  //   const isSnapped = relativeScroll % 1 === 0 && relativeScroll === destinationIndex;
 
-    // skip if there wasn't a change on scroll
-    if (relativeScroll === previousRelativeScrollRef.current) return;
+  //   if (preemptive && !isSnapped && !isTouchingRef.current && closestIndexFromScrollPosition !== destinationIndex && canChangeTabRef.current) {
+  //     startTransition(() => {
+  //       onChange(getKeyByValue(tabsRef.current.valueToIndex, closestIndexFromScrollPosition));
+  //       canAnimateScrollToPanel.current = false;
+  //       canChangeTabRef.current = false;
+  //     })
+  //   }
 
-    // If we are overscroll beyond the boundaries of the scroll container, we just return and do nothing (e.g. Safari browser).
-    if (relativeScroll < 0 || relativeScroll > tabsRef.current.nodes.length - 1) return;
+  //   let {currentTab, nextTab} = getWorkingTabs({
+  //     direction,
+  //     relativeScroll,
+  //     tabs: tabsRef.current.nodes,
+  //     previousTab: previousTabRef.current, 
+  //     previousRelativeScroll: previousRelativeScrollRef.current,
+  //   });
 
-    const direction = previousRelativeScrollRef.current <= relativeScroll ? Direction.RIGHT : Direction.LEFT;
+  //   const currentTabIndex = tabsRef.current.nodes.findIndex(tab => tab === currentTab);
 
-    const destinationIndex = tabsRef.current.valueToIndex.get(valueRef.current);
+  //   let { translateX, scaleX } = calculateTransform({
+  //     currentTab, 
+  //     nextTab, 
+  //     direction, 
+  //     relativeScroll, 
+  //     currentTabIndex, 
+  //     previousTab: previousTabRef.current,
+  //     tabs: tabsRef.current.nodes,
+  //   });
 
-    const isSnapped = relativeScroll % 1 === 0 && relativeScroll === destinationIndex;
+  //   requestAnimationFrame(() => {
+  //     const scaleXCss = `scaleX(${scaleX})`;
+  //     const translateXCss = `translateX(${translateX}px)`;
 
-    if (preemptive && !isSnapped && !isTouchingRef.current && closestIndexFromScrollPosition !== destinationIndex && canChangeTabRef.current) {
-      startTransition(() => {
-        onChange(getKeyByValue(tabsRef.current.valueToIndex, closestIndexFromScrollPosition));
-        canAnimateScrollToPanel.current = false;
-        canChangeTabRef.current = false;
-      })
-    }
+  //     if(tabIndicatorRef.current) tabIndicatorRef.current.style.transform = `${translateXCss} ${scaleXCss}`;
+  //     if (lockScrollWhenSwiping && tabPanels) tabPanels.style.touchAction = currentTabIndex !== destinationIndex ? 'pan-x' : 'auto';
+  //   });
 
-    let {currentTab, nextTab} = getWorkingTabs({
-      direction,
-      relativeScroll,
-      tabs: tabsRef.current.nodes,
-      previousTab: previousTabRef.current, 
-      previousRelativeScroll: previousRelativeScrollRef.current,
-    });
+  //   // set previous relative scroll for the next scroll event
+  //   previousRelativeScrollRef.current = relativeScroll;
 
-    const currentTabIndex = tabsRef.current.nodes.findIndex(tab => tab === currentTab);
-
-    let { translateX, scaleX } = calculateTransform({
-      currentTab, 
-      nextTab, 
-      direction, 
-      relativeScroll, 
-      currentTabIndex, 
-      previousTab: previousTabRef.current,
-      tabs: tabsRef.current.nodes,
-    });
-
-    requestAnimationFrame(() => {
-      const scaleXCss = `scaleX(${scaleX})`;
-      const translateXCss = `translateX(${translateX}px)`;
-
-      if(tabIndicatorRef.current) tabIndicatorRef.current.style.transform = `${translateXCss} ${scaleXCss}`;
-      if (lockScrollWhenSwiping && tabPanels) tabPanels.style.touchAction = currentTabIndex !== destinationIndex ? 'pan-x' : 'auto';
-    });
-
-    // set previous relative scroll for the next scroll event
-    previousRelativeScrollRef.current = relativeScroll;
-
-    // currentTab will be previousTab until there is a tab switch.
-    if (previousTabRef.current === currentTab) return;
+  //   // currentTab will be previousTab until there is a tab switch.
+  //   if (previousTabRef.current === currentTab) return;
    
-    // set previous tab for next scroll event
-    previousTabRef.current = currentTab;
+  //   // set previous tab for next scroll event
+  //   previousTabRef.current = currentTab;
 
-    requestAnimationFrame(() => {
-      /* 
-        Update the tab indicator width outside React for performance reasons. This will
-        cause this element to be out of sync between react and the dom but it's a temporary out of sync.
-        This is only for when the indicator is passing by other tabs until it reaches it's
-        destination tab. Once it reaches it, we re-sync the elements width with it's actual state.
-      */
-      if(tabIndicatorRef.current) tabIndicatorRef.current.style.width = currentTab.clientWidth + 'px';
+  //   requestAnimationFrame(() => {
+  //     /* 
+  //       Update the tab indicator width outside React for performance reasons. This will
+  //       cause this element to be out of sync between react and the dom but it's a temporary out of sync.
+  //       This is only for when the indicator is passing by other tabs until it reaches it's
+  //       destination tab. Once it reaches it, we re-sync the elements width with it's actual state.
+  //     */
+  //     if(tabIndicatorRef.current) tabIndicatorRef.current.style.width = currentTab.clientWidth + 'px';
 
-      if (lockScrollWhenSwiping && tabPanels) tabPanels.style.touchAction = 'auto';
-    });
+  //     if (lockScrollWhenSwiping && tabPanels) tabPanels.style.touchAction = 'auto';
+  //   });
 
-    if (destinationIndex === currentTabIndex) {
-      // we have reached our destination tab, resync width as previously mentioned.
-      startTransition(() => {
-        setTabIndicatorStyle((style: React.CSSProperties) => ({
-          ...style, 
-          width: currentTab.clientWidth, 
-        }));
-      })
-    } else if (canChangeTabRef.current) {
-      canAnimateScrollToPanel.current = false;
-      startTransition(() => {
-        onChange(getKeyByValue(tabsRef.current.valueToIndex, currentTabIndex));
-        setTabIndicatorStyle((style: React.CSSProperties) => ({...style, width: currentTab.clientWidth}));
-      })
-     }
-  }, [lockScrollWhenSwiping, preemptive, tabPanels]);
+  //   if (destinationIndex === currentTabIndex) {
+  //     // we have reached our destination tab, resync width as previously mentioned.
+  //     // startTransition(() => {
+  //     //   setTabIndicatorStyle((style: React.CSSProperties) => ({
+  //     //     ...style, 
+  //     //     width: currentTab.clientWidth, 
+  //     //   }));
+  //     // })
+  //   } /* else if (canChangeTabRef.current) {
+  //     canAnimateScrollToPanel.current = false;
+  //     startTransition(() => {
+  //       onChange(getKeyByValue(tabsRef.current.valueToIndex, currentTabIndex));
+  //       setTabIndicatorStyle((style: React.CSSProperties) => ({...style, width: currentTab.clientWidth}));
+  //     })
+  //    } */
+  // }, [lockScrollWhenSwiping, preemptive, tabPanels]);
  
   
 
-  useEffect(() => {
-    tabPanels?.addEventListener("scroll", onScroll);
+  // useEffect(() => {
+  //   tabPanels?.addEventListener("scroll", onScroll);
 
-    return () => {
-      tabPanels?.removeEventListener("scroll", onScroll);
-    };
-  }, [onScroll, tabPanels]);
+  //   return () => {
+  //     tabPanels?.removeEventListener("scroll", onScroll);
+  //   };
+  // }, [onScroll, tabPanels]);
 
 
   // Effect runs when the scroll container width changes, e.g. mobile orientation changed.
   // This effect will also run once after mount for initial scroll synchronization.
-  useEffect(() => {
+/*   useEffect(() => {
     if (!tabPanels || !tabIndicatorRef.current) return;
 
     const index = tabsRef.current.valueToIndex.get(valueRef.current)!;
@@ -325,7 +333,7 @@ export default function useReactiveTabIndicator<I extends HTMLElement, T extends
       // scroll listener. 
       tabPanels.dispatchEvent(new CustomEvent('scroll'));
     }
-  }, [tabPanelsClientWidth, tabPanels, tabIndicatorRef]);
+  }, [tabPanelsClientWidth, tabPanels, tabIndicatorRef]); */
 
 
   return { tabIndicatorStyle, tabIndicatorRef, tabsRef };

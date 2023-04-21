@@ -336,12 +336,12 @@ function AppInner() {
   return (
     <ThemeProvider theme={theme}>
       <div className="App">
-        <AppCustomTabs tabPanels={tabPanels}>
+        {/* <AppCustomTabs tabPanels={tabPanels}>
           <CustomTabMemo component={ButtonBase} label="Tranquil Forrest" key="1" />
           <CustomTabMemo component={ButtonBase} label="P" key="2" />
           <CustomTabMemo component={ButtonBase} label="Vibrant Beach" key="3" />
           <CustomTabMemo component={ButtonBase} label="Hidden Waterfall" key="4" />
-        </AppCustomTabs>
+        </AppCustomTabs> */}
         {/* <AppCustomTabsWithRoutes tabPanels={tabPanels}>
           <CustomTabMemo component={Link} to="/tranquil-forest" value="tranquil-forest" label="Tranquil Forrest" key="1" />
           <CustomTabMemo component={Link} to="/p" value="p" label="P" key="2" />
@@ -354,12 +354,12 @@ function AppInner() {
           <TabMemo component={Link} to="/vibrant-beach" value="vibrant-beach" label="Vibrant Beach" key="3" />
           <TabMemo component={Link} to="/hidden-waterfall" value="hidden-waterfall" label="Hidden Waterfall" key="4" />
         </AppMuiTabsWithRoutes> */}
-        {/* <AppMuiTabs tabPanels={tabPanels}>
+        <AppMuiTabs tabPanels={tabPanels}>
           <TabMemo label="Tranquil Forrest" key="1" />
           <TabMemo label="P" key="2" />
           <TabMemo label="Vibrant Beach" key="3" />
           <TabMemo label="Hidden Waterfall" key="4" />
-        </AppMuiTabs> */}
+        </AppMuiTabs>
         <FluidTabPanels ref={setTabPanelsRef} id="scrollable-container">
             {tabs.map(({ img, title }, i) =>
               // <Routes>
@@ -383,7 +383,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/p" />} /> 
+        {/* <Route path="/" element={<Navigate to="/p" />} />  */}
         <Route path="*" element={<AppInner />} /> 
       </Routes>
     </BrowserRouter>
