@@ -29,8 +29,9 @@ export default class TabIndicatorManager {
   public value: any;
   public resizeObserver;
   private previousScrollLeft = 0;
-  private scrollInterval = 0;
+  private scrollInterval: ReturnType<typeof setInterval>;
   private __locked = false;
+  private __scheduled = false;
 
   constructor(value: any, tabIndicator: HTMLElement, tabPanels: HTMLElement, tabs: HTMLElement[], valueToIndex: Map<any, number>, tabChangeCallback: (value: any) => void, resizeCallback?: () => void) {
     this.value = value;
@@ -43,7 +44,12 @@ export default class TabIndicatorManager {
     this.__locked = false;
 
 
-    this.scrollInterval = setInterval(this.interval, 0);
+    this.tabPanels.addEventListener("scroll", () => {
+      if (!this.__scheduled) {
+        this.scrollInterval = setTimeout(this.interval, 0);
+        this.__scheduled = true;
+      }
+    });
     // this.tabPanels.addEventListener("scroll", this.scrollHandler);
     
 
@@ -67,6 +73,9 @@ export default class TabIndicatorManager {
         this.__locked = false;
         this.scrollInterval = setInterval(this.interval, 0);
       });
+    } else {
+      clearInterval(this.scrollInterval);
+      this.__scheduled = false;
     }
   }
 
@@ -123,7 +132,9 @@ export default class TabIndicatorManager {
     }
 
     // skip if there wasn't a change on scroll
-    if (relativeScroll === this.previousRelativeScroll) return;
+    if (relativeScroll === this.previousRelativeScroll) {
+      return;
+    } 
 
     // If we are overscroll beyond the boundaries of the scroll container, we just return and do nothing (e.g. Safari browser).
     if (relativeScroll < 0 || relativeScroll > this.tabs.length - 1) return;
@@ -138,6 +149,11 @@ export default class TabIndicatorManager {
       this.tabChangeCallback(getKeyByValue(this.valueToIndex, closestIndexFromScrollPosition));
       this.canAnimateScrollToPanel = false;
       this.canChangeTab = false;
+    }
+
+    if (isSnapped) {
+      clearInterval(this.scrollInterval);
+      this.__scheduled = false;
     }
 
     let {currentTab, nextTab} = getWorkingTabs({
