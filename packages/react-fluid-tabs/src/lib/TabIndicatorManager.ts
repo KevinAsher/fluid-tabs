@@ -29,7 +29,7 @@ export default class TabIndicatorManager {
   public value: any;
   public resizeObserver;
   private previousScrollLeft = 0;
-  private scrollInterval: ReturnType<typeof setInterval>;
+  private timeoutId: ReturnType<typeof setTimeout> | undefined;
   private __locked = false;
   private __scheduled = false;
 
@@ -46,12 +46,10 @@ export default class TabIndicatorManager {
 
     this.tabPanels.addEventListener("scroll", () => {
       if (!this.__scheduled) {
-        this.scrollInterval = setTimeout(this.interval, 0);
+        this.timeoutId = setTimeout(this.interval, 0);
         this.__scheduled = true;
       }
     });
-    // this.tabPanels.addEventListener("scroll", this.scrollHandler);
-    
 
     const win = ownerWindow(this.tabPanels);
     win.addEventListener('resize', this.resizeHandler);
@@ -63,18 +61,25 @@ export default class TabIndicatorManager {
     }
   }
 
+  hasScrolled = () => {
+    const scrollDetected = this.previousScrollLeft !== this.tabPanels.scrollLeft;
+
+    if (scrollDetected) this.previousScrollLeft = this.tabPanels.scrollLeft;
+    
+    return scrollDetected;
+  }
+
   interval = () => {
-    if (!this.__locked && this.previousScrollLeft !== this.tabPanels.scrollLeft) {
-      this.previousScrollLeft = this.tabPanels.scrollLeft;
+    clearTimeout(this.timeoutId);
+
+    if (!this.__locked && this.hasScrolled()) {
       this.scrollHandler({target: this.tabPanels});
-      clearInterval(this.scrollInterval);
       this.__locked = true;
       requestAnimationFrame(() => {
         this.__locked = false;
-        this.scrollInterval = setInterval(this.interval, 0);
+        this.timeoutId = setTimeout(this.interval, 0);
       });
     } else {
-      clearInterval(this.scrollInterval);
       this.__scheduled = false;
     }
   }
@@ -82,9 +87,9 @@ export default class TabIndicatorManager {
   cleanup = () => {
     this.tabPanels?.removeEventListener("scroll", this.scrollHandler);
     this.resizeObserver?.disconnect();
+    clearTimeout(this.timeoutId);
     const win = ownerWindow(this.tabPanels);
-    clearInterval(this.scrollInterval);
-    // win.removeEventListener("resize", this.resizeHandler);
+    win.removeEventListener("resize", this.resizeHandler);
   }
 
   getCurrentTab = () => {
@@ -152,7 +157,7 @@ export default class TabIndicatorManager {
     }
 
     if (isSnapped) {
-      clearInterval(this.scrollInterval);
+      clearTimeout(this.timeoutId);
       this.__scheduled = false;
     }
 
