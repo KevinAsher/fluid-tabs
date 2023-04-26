@@ -5,6 +5,7 @@ import {
   getKeyByValue,
   getWorkingTabs
 } from './utils' ;
+import afterFrame from "./utils/afterFrame";
 import ownerWindow from "./utils/ownerWindow";
 
 // Depending on the device pixel ratio, a scroll container might not be able
@@ -29,7 +30,6 @@ export default class TabIndicatorManager {
   public value: any;
   public resizeObserver;
   private previousScrollLeft = 0;
-  private timeoutId: ReturnType<typeof setTimeout> | undefined;
   private __locked = false;
   private __scheduled = false;
 
@@ -43,10 +43,9 @@ export default class TabIndicatorManager {
     this.resizeCallback = resizeCallback;
     this.__locked = false;
 
-
     this.tabPanels.addEventListener("scroll", () => {
       if (!this.__scheduled) {
-        this.timeoutId = setTimeout(this.interval, 0);
+        afterFrame(this.interval);
         this.__scheduled = true;
       }
     });
@@ -70,14 +69,12 @@ export default class TabIndicatorManager {
   }
 
   interval = () => {
-    clearTimeout(this.timeoutId);
-
     if (!this.__locked && this.hasScrolled()) {
       this.scrollHandler({target: this.tabPanels});
       this.__locked = true;
-      requestAnimationFrame(() => {
+      afterFrame(() => {
         this.__locked = false;
-        this.timeoutId = setTimeout(this.interval, 0);
+        this.interval();
       });
     } else {
       this.__scheduled = false;
@@ -87,7 +84,6 @@ export default class TabIndicatorManager {
   cleanup = () => {
     this.tabPanels?.removeEventListener("scroll", this.scrollHandler);
     this.resizeObserver?.disconnect();
-    clearTimeout(this.timeoutId);
     const win = ownerWindow(this.tabPanels);
     win.removeEventListener("resize", this.resizeHandler);
   }
@@ -157,7 +153,6 @@ export default class TabIndicatorManager {
     }
 
     if (isSnapped) {
-      clearTimeout(this.timeoutId);
       this.__scheduled = false;
     }
 
