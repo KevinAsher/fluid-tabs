@@ -17,6 +17,6 @@ channel.port1.onmessage = () => {
 channel = null;
 
 export default function afterFrame(cb: () => void) {
-  requestAnimationFrame(postMessage);
   callback = cb;
+  requestAnimationFrame(postMessage);
 }

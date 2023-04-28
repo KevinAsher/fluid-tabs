@@ -30,8 +30,8 @@ export default class TabIndicatorManager {
   public value: any;
   public resizeObserver;
   private previousScrollLeft = 0;
-  private __locked = false;
-  private __scheduled = false;
+  private __updated = false;
+  private __updateScheduled = false;
 
   constructor(value: any, tabIndicator: HTMLElement, tabPanels: HTMLElement, tabs: HTMLElement[], valueToIndex: Map<any, number>, tabChangeCallback: (value: any) => void, resizeCallback?: () => void) {
     this.value = value;
@@ -41,12 +41,11 @@ export default class TabIndicatorManager {
     this.valueToIndex = valueToIndex;
     this.tabChangeCallback = tabChangeCallback;
     this.resizeCallback = resizeCallback;
-    this.__locked = false;
 
     this.tabPanels.addEventListener("scroll", () => {
-      if (!this.__scheduled) {
-        afterFrame(this.interval);
-        this.__scheduled = true;
+      if (!this.__updateScheduled) {
+        this.scheduleUpdate();
+        this.__updateScheduled = true;
       }
     });
 
@@ -68,16 +67,20 @@ export default class TabIndicatorManager {
     return scrollDetected;
   }
 
-  interval = () => {
-    if (!this.__locked && this.hasScrolled()) {
+  scheduleUpdate = () => {
+    afterFrame(() => {
+      this.__updated = false;
+      this.update();
+    });
+  }
+
+  update = () => {
+    if (!this.__updated && this.hasScrolled()) {
       this.scrollHandler({target: this.tabPanels});
-      this.__locked = true;
-      afterFrame(() => {
-        this.__locked = false;
-        this.interval();
-      });
+      this.scheduleUpdate();
+      this.__updated = true;
     } else {
-      this.__scheduled = false;
+      this.__updateScheduled = false;
     }
   }
 
@@ -97,7 +100,6 @@ export default class TabIndicatorManager {
   }
 
   resizeHandler = (event: any) => {
-    console.log('resizeHandler')
     this.tabIndicator.style.transform = `translateX(${this.getCurrentTab().offsetLeft}px) scaleX(1)`;
     // this.tabIndicator.style.visibility = 'visible';
     this.tabPanels.scrollLeft = this.getIndex() * this.tabPanels.clientWidth;
@@ -153,7 +155,7 @@ export default class TabIndicatorManager {
     }
 
     if (isSnapped) {
-      this.__scheduled = false;
+      this.__updateScheduled = false;
     }
 
     let {currentTab, nextTab} = getWorkingTabs({
@@ -176,12 +178,12 @@ export default class TabIndicatorManager {
       tabs: this.tabs,
     });
 
-    // requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
       const scaleXCss = `scaleX(${scaleX})`;
       const translateXCss = `translateX(${translateX}px)`;
 
       this.tabIndicator.style.transform = `${translateXCss} ${scaleXCss}`;
-    // });
+    });
     
 
     // set previous relative scroll for the next scroll event
