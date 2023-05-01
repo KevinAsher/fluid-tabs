@@ -1,7 +1,7 @@
 import Direction from './direction' ;
 
 interface GetWorkingTabsProps {
-  previousTab: HTMLElement | null
+  previousTab: HTMLElement
   direction: Direction
   relativeScroll: number
   previousRelativeScroll: number
@@ -32,5 +32,5 @@ export default function getWorkingTabs({
   }
 
   let nextTab = tabs[direction === Direction.RIGHT ? Math.ceil(relativeScroll) : Math.floor(relativeScroll)];
-  return { currentTab: currentTab!, nextTab }
+  return { currentTab, nextTab }
 }

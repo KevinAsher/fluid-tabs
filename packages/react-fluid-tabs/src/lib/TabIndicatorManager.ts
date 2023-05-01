@@ -162,7 +162,7 @@ export default class TabIndicatorManager {
       direction,
       relativeScroll,
       tabs: this.tabs,
-      previousTab: this.previousTab, 
+      previousTab: this.previousTab!, 
       previousRelativeScroll: this.previousRelativeScroll,
     });
 

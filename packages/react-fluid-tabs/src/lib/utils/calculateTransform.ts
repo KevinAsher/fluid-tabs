@@ -30,18 +30,19 @@ export default function calculateTransform({
   currentTabIndex, 
   tabs
 }: CalculateTransformProps): TabIndicatorCssTransform {
-    let currentTabScrollProgress;
     let scaleX;
     let translateX;
 
-    if (currentTab !== nextTab || previousTab !== currentTab) {
-      // Swiping to a diferent tab
-      currentTabScrollProgress = direction === Direction.RIGHT ? relativeScroll % 1 : 1 - (relativeScroll % 1);
-    } else {
-      // Swiping to the current tab
-      currentTabScrollProgress = direction === Direction.RIGHT ? 1 - (relativeScroll % 1 || 1) : relativeScroll % 1;
+    const relativeScrollMod = relativeScroll % 1;
+    const isDifferentTab = currentTab !== nextTab || previousTab !== currentTab;
+    const isDirectionRight = direction === Direction.RIGHT;
 
-      let wasNextTabIndex = direction === Direction.LEFT ? currentTabIndex + 1 : currentTabIndex - 1;
+    const currentTabScrollProgress = isDifferentTab
+      ? isDirectionRight ? relativeScrollMod : 1 - (relativeScrollMod)
+      : isDirectionRight ? 1 - (relativeScrollMod || 1) : relativeScrollMod;
+
+    if (!isDifferentTab) {
+      let wasNextTabIndex = isDirectionRight ? currentTabIndex - 1 : currentTabIndex + 1;
 
       nextTab = tabs[wasNextTabIndex];
     }
