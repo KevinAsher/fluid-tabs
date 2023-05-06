@@ -15,6 +15,17 @@ const SCROLL_RATIO_LIMIT = 0.001;
 
 const easeInOutCubic = (t: number): number => t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
 
+
+interface TabIndicatorManagerConstructorParams {
+  value: any
+  tabIndicator: HTMLElement
+  tabPanels: HTMLElement
+  tabs: HTMLElement[]
+  valueToIndex: Map<any, number>
+  tabChangeCallback: (value: any) => void
+  resizeCallback?: () => void
+}
+
 export default class TabIndicatorManager {
 
   private previousRelativeScroll: number | null = null;
@@ -33,7 +44,7 @@ export default class TabIndicatorManager {
   private __updated = false;
   private __updateScheduled = false;
 
-  constructor(value: any, tabIndicator: HTMLElement, tabPanels: HTMLElement, tabs: HTMLElement[], valueToIndex: Map<any, number>, tabChangeCallback: (value: any) => void, resizeCallback?: () => void) {
+  constructor({value, tabIndicator, tabPanels, tabs, valueToIndex, tabChangeCallback, resizeCallback}: TabIndicatorManagerConstructorParams) {
     this.value = value;
     this.tabIndicator = tabIndicator;
     this.tabPanels = tabPanels;
