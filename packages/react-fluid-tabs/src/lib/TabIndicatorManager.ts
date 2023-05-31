@@ -80,16 +80,14 @@ export default class TabIndicatorManager {
 
   scheduleUpdate = () => {
     afterFrame(() => {
-      this.__updated = false;
       this.update();
     });
   }
 
   update = () => {
-    if (!this.__updated && this.hasScrolled()) {
+    if (this.hasScrolled()) {
       this.scrollHandler({target: this.tabPanels});
       this.scheduleUpdate();
-      this.__updated = true;
     } else {
       this.__updateScheduled = false;
     }
@@ -173,20 +171,13 @@ export default class TabIndicatorManager {
       direction,
       relativeScroll,
       tabs: this.tabs,
-      previousTab: this.previousTab!, 
-      previousRelativeScroll: this.previousRelativeScroll,
     });
-
-    const currentTabIndex = this.tabs.findIndex(tab => tab === currentTab);
 
     let { translateX, scaleX } = calculateTransform({
       currentTab, 
       nextTab, 
       direction, 
       relativeScroll, 
-      currentTabIndex, 
-      previousTab: this.previousTab,
-      tabs: this.tabs,
     });
 
     requestAnimationFrame(() => {
