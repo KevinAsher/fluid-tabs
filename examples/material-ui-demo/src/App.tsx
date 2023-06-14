@@ -241,7 +241,7 @@ function AppMuiTabs({tabPanels, children}) {
   // });
 
   // const navigate = useNavigate();
-  const [value, setValue] = useState(0);
+  const [value, setValue] = useState(1);
   const {
     tabIndicatorStyle,
     tabIndicatorRef,
@@ -263,12 +263,16 @@ function AppMuiTabs({tabPanels, children}) {
 
   let tabIndicatorProps = React.useMemo(() => ({
     ref: tabIndicatorRef,
-    style: tabIndicatorStyle
+    style: {
+      ...tabIndicatorStyle,
+      // width: 0,
+    }
   }), [tabIndicatorStyle]);
 
   return (
+    <>
     <FluidTabs 
-      component={TabsMemo} 
+      component={TabsMemo}
       onChange={onChange}
       value={value} 
       // value={routeMatch.params.tab} 
@@ -278,6 +282,8 @@ function AppMuiTabs({tabPanels, children}) {
       tabsRef={tabsRef}>
       {children}
     </FluidTabs>
+    {/* <div ref={tabIndicatorRef} style={{...tabIndicatorStyle, height: 2, background: 'blue'}}></div> */}
+    </>
   );
 }
 

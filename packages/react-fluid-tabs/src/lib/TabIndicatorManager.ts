@@ -8,22 +8,26 @@ import {
 import afterFrame from "./utils/afterFrame";
 import ownerWindow from "./utils/ownerWindow";
 
-// Depending on the device pixel ratio, a scroll container might not be able
-// to scroll until it's full width as it should (might be a browser bug). Since the definition is unclear,
-// we define an empirical limit ratio.
-const SCROLL_RATIO_LIMIT = 0.001;
-
 const easeInOutCubic = (t: number): number => t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
 
-
-interface TabIndicatorManagerConstructorParams {
+export interface TabIndicatorManagerConstructorParams {
   value: any
+  switchThreshold?: number
   tabIndicator: HTMLElement
   tabPanels: HTMLElement
   tabs: HTMLElement[]
   valueToIndex: Map<any, number>
-  tabChangeCallback: (value: any) => void
-  resizeCallback?: () => void
+
+  /**
+   * Setter to control the current active tab.
+   */
+  onChange: (value: any) => void
+
+  /**
+   * Customize on tab click scroll animation.
+   * @see https://github.com/Stanko/animated-scroll-to#options
+   */
+  animateScrollToOptions?: IUserOptions
 }
 
 export default class TabIndicatorManager {
@@ -32,26 +36,27 @@ export default class TabIndicatorManager {
   private previousTab: HTMLElement | null  = null;
   private tabPanels: HTMLElement;
   private tabs: HTMLElement[];
-  private tabIndicator: HTMLElement;
+  public tabIndicator: HTMLElement;
   private valueToIndex: Map<any, number>;
   private canChangeTab = true;
   private canAnimateScrollToPanel = true;
-  private tabChangeCallback: (value: any) => void;
-  private resizeCallback?: () => void;
+  private onChange: (value: any) => void;
   public value: any;
   public resizeObserver;
+  public switchThreshold: number;
   private previousScrollLeft = 0;
-  private __updated = false;
   private __updateScheduled = false;
+  private animateScrollToOptions?: IUserOptions;
 
-  constructor({value, tabIndicator, tabPanels, tabs, valueToIndex, tabChangeCallback, resizeCallback}: TabIndicatorManagerConstructorParams) {
+  constructor({value, switchThreshold=0.5, tabIndicator, tabPanels, tabs, valueToIndex, onChange, animateScrollToOptions}: TabIndicatorManagerConstructorParams) {
     this.value = value;
     this.tabIndicator = tabIndicator;
     this.tabPanels = tabPanels;
     this.tabs = tabs;
     this.valueToIndex = valueToIndex;
-    this.tabChangeCallback = tabChangeCallback;
-    this.resizeCallback = resizeCallback;
+    this.onChange = onChange;
+    this.switchThreshold = switchThreshold;
+    this.animateScrollToOptions = animateScrollToOptions;
 
     this.tabPanels.addEventListener("scroll", () => {
       if (!this.__updateScheduled) {
@@ -110,7 +115,7 @@ export default class TabIndicatorManager {
 
   resizeHandler = (event: any) => {
     this.tabIndicator.style.transform = `translateX(${this.getCurrentTab().offsetLeft}px) scaleX(1)`;
-    // this.tabIndicator.style.visibility = 'visible';
+    this.tabIndicator.style.visibility = 'visible';
     this.tabPanels.scrollLeft = this.getIndex() * this.tabPanels.clientWidth;
 
     if (this.getIndex() === 0) {
@@ -119,7 +124,6 @@ export default class TabIndicatorManager {
       // scroll listener. 
       this.tabPanels.dispatchEvent(new CustomEvent('scroll'));
     }
-    this.resizeCallback?.();
   }
 
   scrollHandler = (event: any) => {
@@ -129,12 +133,9 @@ export default class TabIndicatorManager {
     // Scroll progress relative to the panel, e.g., 0.4 means we scrolled 40% of the first panel.
     // We can't use tabPanelsClientWidth here because we might get an outdated width from a screen orietation change
     // which will cause a scroll before tabPanelsClientWidth gets a chance to update.
-    const relativeScrollRaw = scrollLeft / this.tabPanels.getBoundingClientRect().width;
+    const relativeScroll = scrollLeft / this.tabPanels.getBoundingClientRect().width;
 
-    const closestIndexFromScrollPosition = Math.round(relativeScrollRaw);
-
-    // Same as relativeScrollRaw, but with it's value snapped to the closest tab panel index when it's very close.
-    const relativeScroll = Math.abs(closestIndexFromScrollPosition - relativeScrollRaw) < SCROLL_RATIO_LIMIT ? closestIndexFromScrollPosition : relativeScrollRaw;
+    const closestIndexFromScrollPosition = Math.round(relativeScroll);
 
     // Only initialize required ref values on initial scroll.
     if (this.previousRelativeScroll === null) {
@@ -153,12 +154,14 @@ export default class TabIndicatorManager {
 
     const direction = this.previousRelativeScroll <= relativeScroll ? Direction.RIGHT : Direction.LEFT;
 
-    const destinationIndex = this.valueToIndex.get(this.value);
+    const destinationIndex = this.valueToIndex.get(this.value)!;
 
     const isSnapped = relativeScroll % 1 === 0 && relativeScroll === destinationIndex;
 
-    if (!isSnapped && closestIndexFromScrollPosition !== destinationIndex && this.canChangeTab) {
-      this.tabChangeCallback(getKeyByValue(this.valueToIndex, closestIndexFromScrollPosition));
+    const shouldChangeTab = Math.abs(relativeScroll - destinationIndex) > this.switchThreshold;
+
+    if (!isSnapped && closestIndexFromScrollPosition !== destinationIndex && this.canChangeTab && shouldChangeTab) {
+      this.onChange(getKeyByValue(this.valueToIndex, closestIndexFromScrollPosition));
       this.canAnimateScrollToPanel = false;
       this.canChangeTab = false;
     }
@@ -231,7 +234,7 @@ export default class TabIndicatorManager {
       minDuration: 500,
       maxDuration: 800,
       easing: easeInOutCubic,
-      // ...animateScrollToOptions,
+      ...this.animateScrollToOptions,
       elementToScroll: this.tabPanels,
       cancelOnUserAction: false,
     }).then((hasScrolledToPosition) => {
