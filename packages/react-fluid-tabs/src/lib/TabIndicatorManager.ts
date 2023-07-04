@@ -30,6 +30,10 @@ export interface TabIndicatorManagerConstructorParams {
   animateScrollToOptions?: IUserOptions
 }
 
+const clamp = (num: number, min: number, max: number) =>
+   Math.max(min, Math.min(num, max));
+
+const round = (num: number) => Math.round((num + Number.EPSILON) * 100) / 100;
 export default class TabIndicatorManager {
 
   private previousRelativeScroll: number | null = null;
@@ -126,6 +130,18 @@ export default class TabIndicatorManager {
     }
   }
 
+  isSnapped = (relativeScroll, destinationIndex, direction) => {
+    const panelWidth = this.tabPanels.getBoundingClientRect().width;
+    const pixelRationCorrection = (direction === Direction.RIGHT ? 1 : -1) * (1/window.devicePixelRatio) / panelWidth;
+    let relativeScrollWithCorrection = round(relativeScroll + pixelRationCorrection);
+    const nextIndex = direction === Direction.RIGHT ? Math.ceil(relativeScrollWithCorrection) : Math.floor(relativeScrollWithCorrection);
+    if (direction === Direction.RIGHT) relativeScrollWithCorrection = clamp(relativeScrollWithCorrection, relativeScroll, nextIndex);
+    else relativeScrollWithCorrection = clamp(relativeScrollWithCorrection, nextIndex, relativeScroll);
+
+    return destinationIndex === relativeScrollWithCorrection && relativeScrollWithCorrection === nextIndex;
+  }
+
+
   scrollHandler = (event: any) => {
     // Total amount of pixels scrolled in the scroll container
     const scrollLeft = event.target.scrollLeft;
@@ -156,19 +172,16 @@ export default class TabIndicatorManager {
 
     const destinationIndex = this.valueToIndex.get(this.value)!;
 
-    const isSnapped = relativeScroll % 1 === 0 && relativeScroll === destinationIndex;
+    const isSnapped = this.isSnapped(relativeScroll, destinationIndex, direction);
 
     const shouldChangeTab = Math.abs(relativeScroll - destinationIndex) > this.switchThreshold;
 
-    if (!isSnapped && closestIndexFromScrollPosition !== destinationIndex && this.canChangeTab && shouldChangeTab) {
+    if (closestIndexFromScrollPosition !== destinationIndex && this.canChangeTab && shouldChangeTab) {
       this.onChange(getKeyByValue(this.valueToIndex, closestIndexFromScrollPosition));
       this.canAnimateScrollToPanel = false;
       this.canChangeTab = false;
     }
 
-    if (isSnapped) {
-      this.__updateScheduled = false;
-    }
 
     let {currentTab, nextTab} = getWorkingTabs({
       direction,
