@@ -5,8 +5,7 @@ import {
   getKeyByValue,
   getWorkingTabs
 } from './utils' ;
-import afterFrame from "./utils/afterFrame";
-import ownerWindow from "./utils/ownerWindow";
+import ScrollManager from "./ScrollManager";
 
 const easeInOutCubic = (t: number): number => t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
 
@@ -42,11 +41,9 @@ export default class TabIndicatorManager {
   private canAnimateScrollToPanel = true;
   private onChange: (value: any) => void;
   public value: any;
-  public resizeObserver;
   public switchThreshold: number;
-  private previousScrollLeft = 0;
-  private __updateScheduled = false;
   private animateScrollToOptions?: IUserOptions;
+  private scrollManager: ScrollManager;
 
   constructor({value, switchThreshold=0.5, tabIndicator, tabPanels, tabs, valueToIndex, onChange, animateScrollToOptions}: TabIndicatorManagerConstructorParams) {
     this.value = value;
@@ -57,53 +54,16 @@ export default class TabIndicatorManager {
     this.onChange = onChange;
     this.switchThreshold = switchThreshold;
     this.animateScrollToOptions = animateScrollToOptions;
+    this.scrollManager = new ScrollManager({
+      scrollTarget: this.tabPanels,
+      axis: 'x',
+      scrollHandler: this.scrollHandler,
+      resizeHandler: this.resizeHandler,
+    })
 
-    this.tabPanels.addEventListener("scroll", () => {
-      if (!this.__updateScheduled) {
-        this.scheduleUpdate();
-        this.__updateScheduled = true;
-      }
-    });
-
-    const win = ownerWindow(this.tabPanels);
-    win.addEventListener('resize', this.resizeHandler);
-
-
-    if (typeof ResizeObserver !== 'undefined') {
-      this.resizeObserver = new ResizeObserver(this.resizeHandler);
-      this.resizeObserver.observe(this.tabPanels);
-    }
   }
 
-  hasScrolled = () => {
-    const scrollDetected = this.previousScrollLeft !== this.tabPanels.scrollLeft;
-
-    if (scrollDetected) this.previousScrollLeft = this.tabPanels.scrollLeft;
-    
-    return scrollDetected;
-  }
-
-  scheduleUpdate = () => {
-    afterFrame(() => {
-      this.update();
-    });
-  }
-
-  update = () => {
-    if (this.hasScrolled()) {
-      this.scrollHandler({target: this.tabPanels});
-      this.scheduleUpdate();
-    } else {
-      this.__updateScheduled = false;
-    }
-  }
-
-  cleanup = () => {
-    this.tabPanels?.removeEventListener("scroll", this.scrollHandler);
-    this.resizeObserver?.disconnect();
-    const win = ownerWindow(this.tabPanels);
-    win.removeEventListener("resize", this.resizeHandler);
-  }
+  cleanup = () => this.scrollManager.cleanup();
 
   getCurrentTab = () => {
     return this.tabs[this.valueToIndex.get(this.value)!];
