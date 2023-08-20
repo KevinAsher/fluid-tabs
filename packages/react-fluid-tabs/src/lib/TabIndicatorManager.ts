@@ -31,8 +31,7 @@ export interface TabIndicatorManagerConstructorParams {
 
 export default class TabIndicatorManager {
 
-  private previousRelativeScroll: number | null = null;
-  private previousTab: HTMLElement | null  = null;
+  private previousTab: HTMLElement | null = null;
   private tabPanels: HTMLElement;
   private tabs: HTMLElement[];
   public tabIndicator: HTMLElement;
@@ -86,6 +85,18 @@ export default class TabIndicatorManager {
     }
   }
 
+  scrollDrivenTabChange = (relativeScroll: number) => {
+    const closestIndexFromScrollPosition = Math.round(relativeScroll);
+    const destinationIndex = this.valueToIndex.get(this.value)!;
+    const shouldChangeTab = Math.abs(relativeScroll - destinationIndex) > this.switchThreshold;
+
+    if (closestIndexFromScrollPosition !== destinationIndex && this.canChangeTab && shouldChangeTab) {
+      this.onChange(getKeyByValue(this.valueToIndex, closestIndexFromScrollPosition));
+      this.canAnimateScrollToPanel = false;
+      this.canChangeTab = false;
+    }
+  }
+
   scrollHandler = (event: any) => {
     // Total amount of pixels scrolled in the scroll container
     const scrollLeft = event.target.scrollLeft;
@@ -95,35 +106,12 @@ export default class TabIndicatorManager {
     // which will cause a scroll before tabPanelsClientWidth gets a chance to update.
     const relativeScroll = scrollLeft / this.tabPanels.getBoundingClientRect().width;
 
-    const closestIndexFromScrollPosition = Math.round(relativeScroll);
-
-    // Only initialize required ref values on initial scroll.
-    if (this.previousRelativeScroll === null) {
-      this.previousRelativeScroll = relativeScroll;
-      this.previousTab = this.tabs[Math.trunc(relativeScroll)];
-      return;
-    }
-
-    // skip if there wasn't a change on scroll
-    if (relativeScroll === this.previousRelativeScroll) {
-      return;
-    } 
-
     // If we are overscroll beyond the boundaries of the scroll container, we just return and do nothing (e.g. Safari browser).
     if (relativeScroll < 0 || relativeScroll > this.tabs.length - 1) return;
 
-    const direction = this.previousRelativeScroll <= relativeScroll ? Direction.RIGHT : Direction.LEFT;
+    this.scrollDrivenTabChange(relativeScroll);
 
-    const destinationIndex = this.valueToIndex.get(this.value)!;
-
-    const shouldChangeTab = Math.abs(relativeScroll - destinationIndex) > this.switchThreshold;
-
-    if (closestIndexFromScrollPosition !== destinationIndex && this.canChangeTab && shouldChangeTab) {
-      this.onChange(getKeyByValue(this.valueToIndex, closestIndexFromScrollPosition));
-      this.canAnimateScrollToPanel = false;
-      this.canChangeTab = false;
-    }
-
+    const direction = this.scrollManager.getScrollDirection();
 
     let {currentTab, nextTab} = getWorkingTabs({
       direction,
@@ -145,10 +133,6 @@ export default class TabIndicatorManager {
       this.tabIndicator.style.transform = `${translateXCss} ${scaleXCss}`;
     });
     
-
-    // set previous relative scroll for the next scroll event
-    this.previousRelativeScroll = relativeScroll;
-
     // currentTab will be previousTab until there is a tab switch.
     if (this.previousTab === currentTab) return;
    
@@ -156,15 +140,8 @@ export default class TabIndicatorManager {
     this.previousTab = currentTab;
 
     requestAnimationFrame(() => {
-      /* 
-        Update the tab indicator width outside React for performance reasons. This will
-        cause this element to be out of sync between react and the dom but it's a temporary out of sync.
-        This is only for when the indicator is passing by other tabs until it reaches it's
-        destination tab. Once it reaches it, we re-sync the elements width with it's actual state.
-      */
       this.tabIndicator.style.width = currentTab.clientWidth + 'px';
     });
-
   }
 
   changeTab = (value: any) => {

@@ -1,3 +1,4 @@
+import { Direction } from "./utils";
 import afterFrame from "./utils/afterFrame";
 import ownerWindow from "./utils/ownerWindow";
 
@@ -40,13 +41,18 @@ export default class ScrollManager {
     }
   }
 
-  hasScrolled = () => {
-    const scrollPosition = this.axis === 'x' ? this.scrollTarget.scrollLeft : this.scrollTarget.scrollTop;
-    const scrollDetected = this.previousScrollPosition !== scrollPosition;
+  getScrollPosition = () =>  {
+    return this.axis === 'x' ? this.scrollTarget.scrollLeft : this.scrollTarget.scrollTop;
+  }
 
-    if (scrollDetected) this.previousScrollPosition = scrollPosition;
-    
-    return scrollDetected;
+  getScrollDirection = () => {
+    return this.previousScrollPosition <= this.getScrollPosition() 
+      ? ( this.axis === 'x' ? Direction.RIGHT : Direction.UP )
+      : ( this.axis === 'x' ? Direction.LEFT : Direction.DOWN );
+  }
+
+  hasScrolled = () => {
+    return this.previousScrollPosition !== this.getScrollPosition();
   }
 
   scheduleUpdate = () => {
@@ -58,6 +64,7 @@ export default class ScrollManager {
   update = () => {
     if (this.hasScrolled()) {
       this.scrollHandler && this.scrollHandler({target: this.scrollTarget});
+      this.previousScrollPosition = this.getScrollPosition();
       this.scheduleUpdate();
     } else {
       this.__updateScheduled = false;
