@@ -358,10 +358,10 @@ function AppInner() {
             <Route index element={<Navigate to="./p" />} /> 
             <Route path=":tab" element={
               <AppMuiTabsWithRoutes tabPanels={tabPanels} >
-                <CustomTabMemo component={Link} to="../tranquil-forest" value="tranquil-forest" label="Tranquil Forrest" key="1" />
-                <CustomTabMemo component={Link} to="../p" value="p" label="P" key="2" />
-                <CustomTabMemo component={Link} to="../vibrant-beach" value="vibrant-beach" label="Vibrant Beach" key="3" />
-                <CustomTabMemo component={Link} to="../hidden-waterfall" value="hidden-waterfall" label="Hidden Waterfall" key="4" />
+                <TabMemo component={Link} to="../tranquil-forest" value="tranquil-forest" label="Tranquil Forrest" key="1" />
+                <TabMemo component={Link} to="../p" value="p" label="P" key="2" />
+                <TabMemo component={Link} to="../vibrant-beach" value="vibrant-beach" label="Vibrant Beach" key="3" />
+                <TabMemo component={Link} to="../hidden-waterfall" value="hidden-waterfall" label="Hidden Waterfall" key="4" />
               </AppMuiTabsWithRoutes>
             } /> 
           </Route> 
