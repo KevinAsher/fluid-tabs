@@ -75,15 +75,7 @@ export default class TabIndicatorManager {
   resizeHandler = (event: any) => {
     this.tabIndicator.style.transform = `translateX(${this.getCurrentTab().offsetLeft}px) scaleX(1)`;
     this.tabIndicator.style.width = `${this.getCurrentTab().clientWidth}px`;
-    // this.tabIndicator.style.visibility = 'visible';
     this.tabPanels.scrollLeft = this.getIndex() * this.tabPanels.clientWidth;
-
-    if (this.getIndex() === 0) {
-      // We need to force a scroll event here since setting scrollLeft
-      // to a number that dosen't cause scroll won't trigger are
-      // scroll listener. 
-      this.tabPanels.dispatchEvent(new CustomEvent('scroll'));
-    }
   }
 
   scrollDrivenTabChange = (relativeScroll: number) => {

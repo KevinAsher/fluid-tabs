@@ -335,14 +335,22 @@ function AppInner() {
       <div className="App">
         <Routes>
           {/* <Route path="/" element={<Navigate to="/p" />} />  */}
-          {/* <Route path="/custom-tabs" element={
+          <Route path="/custom-tabs" element={
             <AppCustomTabs tabPanels={tabPanels}>
               <CustomTabMemo component={ButtonBase} label="Tranquil Forrest" key="1" />
               <CustomTabMemo component={ButtonBase} label="P" key="2" />
               <CustomTabMemo component={ButtonBase} label="Vibrant Beach" key="3" />
               <CustomTabMemo component={ButtonBase} label="Hidden Waterfall" key="4" />
             </AppCustomTabs>
-          } />  */}
+          } /> 
+          <Route path="/mui-tabs" element={
+            <AppMuiTabs tabPanels={tabPanels}>
+              <TabMemo label="Tranquil Forrest" key="1" />
+              <TabMemo label="P" key="2" />
+              <TabMemo label="Vibrant Beach" key="3" />
+              <TabMemo label="Hidden Waterfall" key="4" />
+            </AppMuiTabs>
+          } /> 
           <Route path="/routes-custom-tabs/*">            
             <Route index element={<Navigate to="./p" />} /> 
             <Route path=":tab" element={
