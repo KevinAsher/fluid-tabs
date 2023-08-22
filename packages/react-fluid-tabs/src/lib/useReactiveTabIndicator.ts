@@ -44,7 +44,7 @@ const initialTabIndicatorStyle: React.CSSProperties = {
   // Make it initially invisible, and only made visible after the first scroll event
   // which happens on mount. This is used to avoid seeing the tab indicator
   // jump around when the component mounts.
-  visibility: 'hidden'
+  // visibility: 'hidden'
 };
 
 export default function useReactiveTabIndicator<T extends HTMLElement>

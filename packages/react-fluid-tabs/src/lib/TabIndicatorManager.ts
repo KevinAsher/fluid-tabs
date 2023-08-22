@@ -74,7 +74,8 @@ export default class TabIndicatorManager {
 
   resizeHandler = (event: any) => {
     this.tabIndicator.style.transform = `translateX(${this.getCurrentTab().offsetLeft}px) scaleX(1)`;
-    this.tabIndicator.style.visibility = 'visible';
+    this.tabIndicator.style.width = `${this.getCurrentTab().clientWidth}px`;
+    // this.tabIndicator.style.visibility = 'visible';
     this.tabPanels.scrollLeft = this.getIndex() * this.tabPanels.clientWidth;
 
     if (this.getIndex() === 0) {

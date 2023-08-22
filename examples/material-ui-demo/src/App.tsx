@@ -7,7 +7,7 @@ import { ThemeProvider, useThemeProps } from "@mui/material/styles";
 import styled from "styled-components";
 import tabs from "./data";
 import { useReactiveTabIndicator, useTabPanelsRef, FluidTabPanel, FluidTabPanels, FluidTabs } from 'react-fluid-tabs';
-import { BrowserRouter, Routes, Route, Link, useMatch, useNavigate, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, useMatch, useNavigate, Navigate, useResolvedPath, useParams, useLocation } from "react-router-dom";
 
 const Line = styled.div`
   height: 1rem;
@@ -198,23 +198,18 @@ function AppCustomTabs({tabPanels, children}) {
 }
 
 function AppCustomTabsWithRoutes({tabPanels, children}) {
-  const routeMatch = useMatch({
-    path: '/:tab',
-    end: true,
-    caseSensitive: true
-  });
-
+  const { tab } = useParams();
   const navigate = useNavigate();
   const {
     tabIndicatorStyle,
     tabIndicatorRef,
     tabsRef
   } = useReactiveTabIndicator({ 
-    value: routeMatch.params.tab, 
-    onChange: (val) => navigate(`./${val}`), 
+    value: tab, 
+    onChange: (val) => {
+      navigate(`../${val}`)
+    },
     tabPanels,
-    preemptive: true,
-    // lockScrollWhenSwiping: true,
   });
 
   let tabIndicatorProps = React.useMemo(() => ({
@@ -225,7 +220,7 @@ function AppCustomTabsWithRoutes({tabPanels, children}) {
   return (
     <FluidTabs 
       component={CustomTabsMemo} 
-      value={routeMatch.params.tab} 
+      value={tab}
       tabIndicatorProps={tabIndicatorProps} 
       tabsRef={tabsRef}>
       {children}
@@ -289,31 +284,19 @@ function AppMuiTabs({tabPanels, children}) {
 
 
 function AppMuiTabsWithRoutes({tabPanels, children}) {
-  const routeMatch = useMatch({
-    path: '/:tab',
-    end: true,
-    caseSensitive: true
-  });
-
+  const { tab } = useParams();
   const navigate = useNavigate();
-  // const [value, setValue] = useState("2");
   const {
     tabIndicatorStyle,
     tabIndicatorRef,
     tabsRef
   } = useReactiveTabIndicator({ 
-    value: routeMatch.params.tab, 
-    onChange: (val) => navigate(`./${val}`), 
-    // value, 
-    // onChange: setValue,
+    value: tab, 
+    onChange: (val) => {
+      navigate(`../${val}`)
+    },
     tabPanels,
-    preemptive: true,
-    // lockScrollWhenSwiping: true,
   });
-
-  // const onChange = React.useCallback((e, val) => {
-  //   setValue(val);
-  // }, []);
 
 
   let tabIndicatorProps = React.useMemo(() => ({
@@ -324,9 +307,7 @@ function AppMuiTabsWithRoutes({tabPanels, children}) {
   return (
     <FluidTabs 
       component={TabsMemo} 
-      // onChange={onChange}
-      // value={value} 
-      value={routeMatch.params.tab} 
+      value={tab} 
       TabIndicatorProps={tabIndicatorProps} 
       variant="scrollable"
       scrollButtons={false}
@@ -336,36 +317,68 @@ function AppMuiTabsWithRoutes({tabPanels, children}) {
   );
 }
 
+const AppCustomTabsWithRoutesDemo = ({tabPanels}) => {
+  return (
+    <AppCustomTabsWithRoutes tabPanels={tabPanels} >
+      <CustomTabMemo component={Link} to="tranquil-forest" value="tranquil-forest" label="Tranquil Forrest" key="1" />
+      <CustomTabMemo component={Link} to="p" value="p" label="P" key="2" />
+      <CustomTabMemo component={Link} to="vibrant-beach" value="vibrant-beach" label="Vibrant Beach" key="3" />
+      <CustomTabMemo component={Link} to="hidden-waterfall" value="hidden-waterfall" label="Hidden Waterfall" key="4" />
+    </AppCustomTabsWithRoutes>
+  );
+}
+
 function AppInner() {
   const {tabPanels, setTabPanelsRef} = useTabPanelsRef();
 
   return (
-    <ThemeProvider theme={theme}>
       <div className="App">
-        {/* <AppCustomTabs tabPanels={tabPanels}>
-          <CustomTabMemo component={ButtonBase} label="Tranquil Forrest" key="1" />
-          <CustomTabMemo component={ButtonBase} label="P" key="2" />
-          <CustomTabMemo component={ButtonBase} label="Vibrant Beach" key="3" />
-          <CustomTabMemo component={ButtonBase} label="Hidden Waterfall" key="4" />
-        </AppCustomTabs> */}
-        {/* <AppCustomTabsWithRoutes tabPanels={tabPanels}>
-          <CustomTabMemo component={Link} to="/tranquil-forest" value="tranquil-forest" label="Tranquil Forrest" key="1" />
-          <CustomTabMemo component={Link} to="/p" value="p" label="P" key="2" />
-          <CustomTabMemo component={Link} to="/vibrant-beach" value="vibrant-beach" label="Vibrant Beach" key="3" />
-          <CustomTabMemo component={Link} to="/hidden-waterfall" value="hidden-waterfall" label="Hidden Waterfall" key="4" />
-        </AppCustomTabsWithRoutes> */}
+        <Routes>
+          {/* <Route path="/" element={<Navigate to="/p" />} />  */}
+          {/* <Route path="/custom-tabs" element={
+            <AppCustomTabs tabPanels={tabPanels}>
+              <CustomTabMemo component={ButtonBase} label="Tranquil Forrest" key="1" />
+              <CustomTabMemo component={ButtonBase} label="P" key="2" />
+              <CustomTabMemo component={ButtonBase} label="Vibrant Beach" key="3" />
+              <CustomTabMemo component={ButtonBase} label="Hidden Waterfall" key="4" />
+            </AppCustomTabs>
+          } />  */}
+          <Route path="/routes-custom-tabs/*">            
+            <Route index element={<Navigate to="./p" />} /> 
+            <Route path=":tab" element={
+              <AppCustomTabsWithRoutes tabPanels={tabPanels} >
+                <CustomTabMemo component={Link} to="../tranquil-forest" value="tranquil-forest" label="Tranquil Forrest" key="1" />
+                <CustomTabMemo component={Link} to="../p" value="p" label="P" key="2" />
+                <CustomTabMemo component={Link} to="../vibrant-beach" value="vibrant-beach" label="Vibrant Beach" key="3" />
+                <CustomTabMemo component={Link} to="../hidden-waterfall" value="hidden-waterfall" label="Hidden Waterfall" key="4" />
+              </AppCustomTabsWithRoutes>
+            } /> 
+          </Route> 
+          <Route path="/routes-mui-tabs/*">            
+            <Route index element={<Navigate to="./p" />} /> 
+            <Route path=":tab" element={
+              <AppMuiTabsWithRoutes tabPanels={tabPanels} >
+                <CustomTabMemo component={Link} to="../tranquil-forest" value="tranquil-forest" label="Tranquil Forrest" key="1" />
+                <CustomTabMemo component={Link} to="../p" value="p" label="P" key="2" />
+                <CustomTabMemo component={Link} to="../vibrant-beach" value="vibrant-beach" label="Vibrant Beach" key="3" />
+                <CustomTabMemo component={Link} to="../hidden-waterfall" value="hidden-waterfall" label="Hidden Waterfall" key="4" />
+              </AppMuiTabsWithRoutes>
+            } /> 
+          </Route> 
+
+        </Routes>
         {/* <AppMuiTabsWithRoutes tabPanels={tabPanels}>
-          <TabMemo component={Link} to="/tranquil-forest" value="tranquil-forest" label="Tranquil Forrest" key="1" />
-          <TabMemo component={Link} to="/p" value="p" label="P" key="2" />
-          <TabMemo component={Link} to="/vibrant-beach" value="vibrant-beach" label="Vibrant Beach" key="3" />
-          <TabMemo component={Link} to="/hidden-waterfall" value="hidden-waterfall" label="Hidden Waterfall" key="4" />
+          <TabMemo component={Link} to="/tranquil-forest" value="tranquil-forest" label="Tranquil Forrest" />
+          <TabMemo component={Link} to="/p" value="p" label="P" />
+          <TabMemo component={Link} to="/vibrant-beach" value="vibrant-beach" label="Vibrant Beach" />
+          <TabMemo component={Link} to="/hidden-waterfall" value="hidden-waterfall" label="Hidden Waterfall" />
         </AppMuiTabsWithRoutes> */}
-        <AppMuiTabs tabPanels={tabPanels}>
+        {/* <AppMuiTabs tabPanels={tabPanels}>
           <TabMemo label="Tranquil Forrest" key="1" />
           <TabMemo label="P" key="2" />
           <TabMemo label="Vibrant Beach" key="3" />
           <TabMemo label="Hidden Waterfall" key="4" />
-        </AppMuiTabs>
+        </AppMuiTabs> */}
         <FluidTabPanels ref={setTabPanelsRef} id="scrollable-container">
             {tabs.map(({ img, title }, i) =>
               // <Routes>
@@ -381,18 +394,19 @@ function AppInner() {
             )}
         </FluidTabPanels>
       </div>
-    </ThemeProvider>
   );
 }
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* <Route path="/" element={<Navigate to="/p" />} />  */}
-        <Route path="*" element={<AppInner />} /> 
-      </Routes>
-    </BrowserRouter>
+    <ThemeProvider theme={theme}>
+      <BrowserRouter>
+        <Routes>
+          {/* <Route path="/" element={<Navigate to="/p" />} />  */}
+          <Route path="*" element={<AppInner />} /> 
+        </Routes>
+      </BrowserRouter>
+    </ThemeProvider>
   )
 }
 
