@@ -98,20 +98,7 @@ export default class TabIndicatorManager {
     }
   }
 
-  scrollHandler = (event: any) => {
-    // Total amount of pixels scrolled in the scroll container
-    const scrollLeft = event.target.scrollLeft;
-
-    // Scroll progress relative to the panel, e.g., 0.4 means we scrolled 40% of the first panel.
-    // We can't use tabPanelsClientWidth here because we might get an outdated width from a screen orietation change
-    // which will cause a scroll before tabPanelsClientWidth gets a chance to update.
-    const relativeScroll = scrollLeft / this.tabPanels.getBoundingClientRect().width;
-
-    // If we are overscroll beyond the boundaries of the scroll container, we just return and do nothing (e.g. Safari browser).
-    if (relativeScroll < 0 || relativeScroll > this.tabs.length - 1) return;
-
-    this.scrollDrivenTabChange(relativeScroll);
-
+  updateTabIndicator = (relativeScroll: number) => {
     const direction = this.scrollManager.getScrollDirection();
 
     let {currentTab, nextTab} = getWorkingTabs({
@@ -143,6 +130,22 @@ export default class TabIndicatorManager {
     requestAnimationFrame(() => {
       this.tabIndicator.style.width = currentTab.clientWidth + 'px';
     });
+  }
+
+  scrollHandler = (event: any) => {
+    // Total amount of pixels scrolled in the scroll container
+    const scrollLeft = event.target.scrollLeft;
+
+    // Scroll progress relative to the panel, e.g., 0.4 means we scrolled 40% of the first panel.
+    // We can't use tabPanelsClientWidth here because we might get an outdated width from a screen orietation change
+    // which will cause a scroll before tabPanelsClientWidth gets a chance to update.
+    const relativeScroll = scrollLeft / this.tabPanels.getBoundingClientRect().width;
+
+    // If we are overscroll beyond the boundaries of the scroll container, we just return and do nothing (e.g. Safari browser).
+    if (relativeScroll < 0 || relativeScroll > this.tabs.length - 1) return;
+
+    this.scrollDrivenTabChange(relativeScroll);
+    this.updateTabIndicator(relativeScroll)
   }
 
   changeTab = (value: any) => {
