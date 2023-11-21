@@ -1,34 +1,38 @@
 import React, { useState, useRef, useEffect } from "react";
-import TabIndicatorManager, { TabIndicatorManagerConstructorParams } from "./TabIndicatorManager";
+import TabIndicatorManager, {
+  TabIndicatorManagerConstructorParams,
+} from "./TabIndicatorManager";
 import useRefCallback from "./useRefCallback";
 
 // Simple fallback for React versions before 18
-let startTransition = React.startTransition || (cb => cb());
+let startTransition = React.startTransition || ((cb) => cb());
 
 export type ReactiveTabIndicatorHookProps = {
   /**
    * The scroll container element of the tab panel list.
    */
-  tabPanels: HTMLElement | null
-
-} & Pick<TabIndicatorManagerConstructorParams, 'switchThreshold' | 'animateScrollToOptions' | 'value' | 'onChange'>;
+  tabPanels: HTMLElement | null;
+} & Pick<
+  TabIndicatorManagerConstructorParams,
+  "switchThreshold" | "animateScrollToOptions" | "value" | "onChange"
+>;
 
 interface TabsRef<T> {
-  nodes: T[],
-  valueToIndex: Map<any, number>
-};
+  nodes: T[];
+  valueToIndex: Map<any, number>;
+}
 
-export interface ReactiveTabIndicatorHookValues<I, T=I> {
+export interface ReactiveTabIndicatorHookValues<I, T = I> {
   /**
    * Required CSS styles for the tab indicator element.
    */
-  tabIndicatorStyle: React.CSSProperties, 
+  tabIndicatorStyle: React.CSSProperties;
 
   /**
    * A ref to the tab indicator element.
    */
-  tabIndicatorRef: React.RefCallback<HTMLElement>, 
-  
+  tabIndicatorRef: React.RefCallback<HTMLElement>;
+
   /**
    * A special ref useed as an instance variable required to get the tab elements,
    * indexes and values.
@@ -40,20 +44,23 @@ const initialTabIndicatorStyle: React.CSSProperties = {
   left: 0,
   transition: "none",
   transformOrigin: "left 50% 0",
-  willChange: 'transform, width',
+  willChange: "transform, width",
 };
 
-export default function useReactiveTabIndicator<T extends HTMLElement>
-({ 
-  tabPanels, 
-  value, 
+export default function useReactiveTabIndicator<T extends HTMLElement>({
+  tabPanels,
+  value,
   onChange,
-  switchThreshold,  
+  switchThreshold,
   animateScrollToOptions,
-}: ReactiveTabIndicatorHookProps) : ReactiveTabIndicatorHookValues<T> {
-  const [tabIndicatorStyle, setTabIndicatorStyle] = useState<React.CSSProperties>(initialTabIndicatorStyle);
+}: ReactiveTabIndicatorHookProps): ReactiveTabIndicatorHookValues<T> {
+  const [tabIndicatorStyle, setTabIndicatorStyle] =
+    useState<React.CSSProperties>(initialTabIndicatorStyle);
   const [tabIndicator, tabIndicatorRef] = useRefCallback();
-  const tabsRef = useRef({nodes: [] as T[], valueToIndex: new Map<any, number>()});
+  const tabsRef = useRef({
+    nodes: [] as T[],
+    valueToIndex: new Map<any, number>(),
+  });
   const tabIndicatorManagerRef = useRef<TabIndicatorManager | null>(null);
 
   useEffect(() => {
@@ -61,10 +68,10 @@ export default function useReactiveTabIndicator<T extends HTMLElement>
 
     const syncTabIndicatorWidth = () => {
       setTabIndicatorStyle((style: React.CSSProperties) => ({
-        ...style, 
+        ...style,
         width: tabIndicatorManagerRef.current?.getCurrentTab().clientWidth,
       }));
-    }
+    };
 
     tabIndicatorManagerRef.current = new TabIndicatorManager({
       value,
@@ -77,7 +84,7 @@ export default function useReactiveTabIndicator<T extends HTMLElement>
       onChange(value) {
         startTransition(() => {
           onChange(value);
-        })
+        });
       },
     });
 

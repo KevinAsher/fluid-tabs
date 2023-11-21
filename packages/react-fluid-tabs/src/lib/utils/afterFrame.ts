@@ -4,9 +4,9 @@ let callback: (() => void) | null = null;
 
 let channel: MessageChannel | null = new MessageChannel();
 
-let postMessage = (function(this: MessagePort) {
+let postMessage = function (this: MessagePort) {
   this.postMessage(undefined);
-}).bind(channel.port2);
+}.bind(channel.port2);
 
 // Flush the callback queue when a message is posted to the message channel
 channel.port1.onmessage = () => {

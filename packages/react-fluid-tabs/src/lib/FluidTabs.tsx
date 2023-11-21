@@ -1,11 +1,11 @@
-import React from 'react';
-import {type ReactiveTabIndicatorHookValues} from './useReactiveTabIndicator';
+import React from "react";
+import { type ReactiveTabIndicatorHookValues } from "./useReactiveTabIndicator";
 
 interface Props {
   tabsRef: ReactiveTabIndicatorHookValues<HTMLElement>["tabsRef"];
   children: JSX.Element[];
   component: React.ElementType;
-} 
+}
 
 const FluidTabs = React.forwardRef((props: Props, ref) => {
   const { tabsRef, children, component: Component, ...rest } = props;
@@ -19,7 +19,7 @@ const FluidTabs = React.forwardRef((props: Props, ref) => {
   }, []);
 
   const childrenWithRef = React.Children.map(children, (child, index) => {
-    return React.cloneElement(child, {ref: addToRefs});
+    return React.cloneElement(child, { ref: addToRefs });
   });
 
   // Latest ref pattern - keep child props in sync with ref data
@@ -30,10 +30,10 @@ const FluidTabs = React.forwardRef((props: Props, ref) => {
   });
 
   return (
-   <Component ref={ref} {...rest}>
-    {childrenWithRef}
-   </Component> 
-  )
+    <Component ref={ref} {...rest}>
+      {childrenWithRef}
+    </Component>
+  );
 });
 
 export default React.memo(FluidTabs);

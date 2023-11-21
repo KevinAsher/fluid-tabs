@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState } from "react";
 
 export default function useTabPanelsRef() {
   const [tabPanels, setTabPanels] = useState<HTMLElement | null>(null);
@@ -7,5 +7,5 @@ export default function useTabPanelsRef() {
     setTabPanels(el);
   }, []);
 
-  return {tabPanels, setTabPanelsRef};
+  return { tabPanels, setTabPanelsRef };
 }

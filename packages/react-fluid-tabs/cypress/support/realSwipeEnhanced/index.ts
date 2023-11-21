@@ -40,24 +40,19 @@ export interface RealSwipeEnhancedOptions {
   step?: number;
 
   wait?: number;
-
-
 }
 
-function buildMovementList(
-  {
-    distance,
-    step,
-    startPosition,
-    direction,
-  }: {
-    distance: number;
-    step: number;
-    direction: SwipeDirection;
-    startPosition: PositionCoordinates;
-  },
-) {
-
+function buildMovementList({
+  distance,
+  step,
+  startPosition,
+  direction,
+}: {
+  distance: number;
+  step: number;
+  direction: SwipeDirection;
+  startPosition: PositionCoordinates;
+}) {
   const movementList: PositionCoordinates[] = [];
 
   const getPositionByDirection: Record<
@@ -90,15 +85,14 @@ function buildMovementList(
 }
 
 interface Movement {
-  direction: SwipeDirection,
-  options: RealSwipeEnhancedOptions
+  direction: SwipeDirection;
+  options: RealSwipeEnhancedOptions;
 }
 
 export async function realSwipeEnhanced(
   subject: JQuery,
   movements: Movement[],
 ) {
-
   const log = Cypress.log({
     $el: subject,
     name: "realSwipe",
@@ -119,7 +113,7 @@ export async function realSwipeEnhanced(
     type: "touchStart",
     touchPoints: [startPosition],
   });
-  
+
   let lastPosition: PositionCoordinates = startPosition;
 
   let movementList: PositionCoordinates[] = [];
@@ -127,7 +121,7 @@ export async function realSwipeEnhanced(
   for (const movement of movements) {
     const options = movement.options;
     const direction = movement.direction;
-    const position = 
+    const position =
       options.x && options.y
         ? { x: options.x, y: options.y }
         : options.touchPosition;
@@ -135,20 +129,25 @@ export async function realSwipeEnhanced(
     const distance = options.distance || 10;
     const step = options.step || 10;
 
-    movementList = [ 
-      ...movementList, 
-      ...buildMovementList({distance, step, direction, startPosition: lastPosition})
+    movementList = [
+      ...movementList,
+      ...buildMovementList({
+        distance,
+        step,
+        direction,
+        startPosition: lastPosition,
+      }),
     ];
 
     lastPosition = movementList[movementList.length - 1];
   }
-  console.log(movementList)
+  console.log(movementList);
 
   for (const position of movementList) {
     await fireCdpCommand("Input.dispatchTouchEvent", {
       type: "touchMove",
       touchPoints: [position],
-    })
+    });
   }
 
   await fireCdpCommand("Input.dispatchTouchEvent", {

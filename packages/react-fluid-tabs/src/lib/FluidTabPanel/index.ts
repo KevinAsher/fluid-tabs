@@ -1,1 +1,1 @@
-export { default } from './FluidTabPanel'
+export { default } from "./FluidTabPanel";

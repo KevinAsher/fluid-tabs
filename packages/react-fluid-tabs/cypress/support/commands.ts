@@ -36,7 +36,7 @@
 //   }
 // }
 
-import { realSwipeEnhanced } from './realSwipeEnhanced';
+import { realSwipeEnhanced } from "./realSwipeEnhanced";
 
 type NormalizeCypressCommand<TFun> = TFun extends (
   subject: infer TSubject,
@@ -54,7 +54,9 @@ type NormalizeNonSubjectCypressCommand<TFun> = TFun extends (
 Cypress.Commands.add(
   "realSwipeEnhanced",
   { prevSubject: true },
-  realSwipeEnhanced as unknown as NormalizeCypressCommand<typeof realSwipeEnhanced>
+  realSwipeEnhanced as unknown as NormalizeCypressCommand<
+    typeof realSwipeEnhanced
+  >,
 );
 
 declare global {

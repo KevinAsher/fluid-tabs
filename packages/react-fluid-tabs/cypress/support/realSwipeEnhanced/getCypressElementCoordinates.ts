@@ -1,4 +1,3 @@
-
 export type PositionCoordinates = { x: number; y: number };
 export type Position =
   | "topLeft"
@@ -20,7 +19,7 @@ function getPositionedCoordinates(
   y0: number,
   width: number,
   height: number,
-  position: Position
+  position: Position,
 ) {
   if (typeof position === "object" && position !== null) {
     const { x, y } = position;
@@ -55,7 +54,7 @@ function getPositionedCoordinates(
  */
 function scrollIntoView(
   htmlElement: HTMLElement,
-  scrollBehavior: ScrollBehaviorPosition = "center"
+  scrollBehavior: ScrollBehaviorPosition = "center",
 ) {
   let block: ScrollLogicalPosition;
 
@@ -82,7 +81,7 @@ function getFrameElement(currentWindow: Window): HTMLElement {
   // fallback to querying using the parent window, mainly to grab the AUT iframe
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   return [...currentWindow.parent.document.querySelectorAll("iframe")].find(
-    (iframe) => iframe.contentWindow === currentWindow
+    (iframe) => iframe.contentWindow === currentWindow,
   )!;
 }
 
@@ -112,8 +111,8 @@ function getIframesPositionShift(element: HTMLElement) {
       frameX: frameX + x * frameScale,
       frameY: frameY + y * frameScale,
       frameScale: frameScale * (width / frame.offsetWidth),
-    }
-  }, noPositionShift)
+    };
+  }, noPositionShift);
 }
 
 /**
@@ -146,14 +145,14 @@ function getElementPositionXY(htmlElement: HTMLElement) {
 export function getCypressElementCoordinates(
   jqueryEl: JQuery,
   position: Position | undefined,
-  scrollBehavior?: ScrollBehaviorOptions
+  scrollBehavior?: ScrollBehaviorOptions,
 ) {
   const htmlElement = jqueryEl.get(0);
   const cypressAppFrame = window.parent.document.querySelector("iframe");
 
   if (!cypressAppFrame) {
     throw new Error(
-      "Can not find cypress application iframe, it looks like critical issue. Please rise an issue on GitHub."
+      "Can not find cypress application iframe, it looks like critical issue. Please rise an issue on GitHub.",
     );
   }
 
@@ -170,7 +169,7 @@ export function getCypressElementCoordinates(
     y,
     width,
     height,
-    position || "center"
+    position || "center",
   );
 
   return {
