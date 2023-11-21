@@ -3,7 +3,8 @@ import {
   calculateTransform,
   Direction,
   getKeyByValue,
-  getWorkingTabs
+  getWorkingTabs,
+  transformCss
 } from './utils' ;
 import ScrollManager from "./ScrollManager";
 
@@ -16,6 +17,7 @@ export interface TabIndicatorManagerConstructorParams {
   tabPanels: HTMLElement
   tabs: HTMLElement[]
   valueToIndex: Map<any, number>
+  disableScrollTimeline?: boolean
 
   /**
    * Setter to control the current active tab.
@@ -43,8 +45,11 @@ export default class TabIndicatorManager {
   public switchThreshold: number;
   private animateScrollToOptions?: IUserOptions;
   private scrollManager: ScrollManager;
+  private scrollTimeline: ScrollTimeline | null = null;
+  private tabIndicatorAnimation: Animation | null = null;
+  private disableScrollTimeline = false;
 
-  constructor({value, switchThreshold=0.5, tabIndicator, tabPanels, tabs, valueToIndex, onChange, animateScrollToOptions}: TabIndicatorManagerConstructorParams) {
+  constructor({value, switchThreshold=0.5, tabIndicator, tabPanels, tabs, valueToIndex, onChange, disableScrollTimeline=false, animateScrollToOptions}: TabIndicatorManagerConstructorParams) {
     this.value = value;
     this.tabIndicator = tabIndicator;
     this.tabPanels = tabPanels;
@@ -58,7 +63,15 @@ export default class TabIndicatorManager {
       axis: 'x',
       scrollHandler: this.scrollHandler,
       resizeHandler: this.resizeHandler,
-    })
+    });
+    this.disableScrollTimeline = disableScrollTimeline && ('ScrollTimeline' in window);
+
+    if (!this.disableScrollTimeline) {
+      this.scrollTimeline = new window.ScrollTimeline({
+        source: this.tabPanels,
+        axis: 'inline',
+      });
+    } 
 
   }
 
@@ -73,7 +86,7 @@ export default class TabIndicatorManager {
   }
 
   resizeHandler = (event: any) => {
-    this.tabIndicator.style.transform = `translateX(${this.getCurrentTab().offsetLeft}px) scaleX(1)`;
+    this.tabIndicator.style.transform = transformCss(this.getCurrentTab().offsetLeft, 1);
     this.tabIndicator.style.width = `${this.getCurrentTab().clientWidth}px`;
     this.tabPanels.scrollLeft = this.getIndex() * this.tabPanels.clientWidth;
   }
@@ -99,20 +112,19 @@ export default class TabIndicatorManager {
       tabs: this.tabs,
     });
 
-    let { translateX, scaleX } = calculateTransform({
-      currentTab, 
-      nextTab, 
-      direction, 
-      relativeScroll, 
-    });
+    if (!this.disableScrollTimeline) {
+      let { translateX, scaleX } = calculateTransform({
+        currentTab, 
+        nextTab, 
+        direction, 
+        relativeScroll, 
+      });
 
-    requestAnimationFrame(() => {
-      const scaleXCss = `scaleX(${scaleX})`;
-      const translateXCss = `translateX(${translateX}px)`;
+      requestAnimationFrame(() => {
+        this.tabIndicator.style.transform = transformCss(translateX, scaleX);
+      });
+    }
 
-      this.tabIndicator.style.transform = `${translateXCss} ${scaleXCss}`;
-    });
-    
     // currentTab will be previousTab until there is a tab switch.
     if (this.previousTab === currentTab) return;
    
@@ -121,6 +133,23 @@ export default class TabIndicatorManager {
 
     requestAnimationFrame(() => {
       this.tabIndicator.style.width = currentTab.clientWidth + 'px';
+      
+      if (!this.disableScrollTimeline) {
+        const transform = this.tabs.map(tab => {
+            const scaleX = tab.clientWidth / currentTab.clientWidth;
+            const translateX = tab.offsetLeft;
+
+            return transformCss(translateX, scaleX);
+        })
+
+        this.tabIndicatorAnimation?.cancel();
+        this.tabIndicatorAnimation = this.tabIndicator.animate(
+          { transform }, {
+          fill:     'both',
+          timeline: this.scrollTimeline,
+        });
+      }
+
     });
   }
 
