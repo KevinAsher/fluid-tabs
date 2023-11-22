@@ -74,8 +74,7 @@ export default class TabIndicatorManager {
       scrollHandler: this.scrollHandler,
       resizeHandler: this.resizeHandler,
     });
-    this.disableScrollTimeline =
-      disableScrollTimeline && "ScrollTimeline" in window;
+    this.disableScrollTimeline = !("ScrollTimeline" in window) || disableScrollTimeline;
 
     if (!this.disableScrollTimeline) {
       this.scrollTimeline = new ScrollTimeline({
@@ -132,7 +131,7 @@ export default class TabIndicatorManager {
       tabs: this.tabs,
     });
 
-    if (!this.disableScrollTimeline) {
+    if (this.disableScrollTimeline) {
       let { translateX, scaleX } = calculateTransform({
         currentTab,
         nextTab,
