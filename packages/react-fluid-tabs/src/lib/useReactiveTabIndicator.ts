@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
 import TabIndicatorManager, {
-  TabIndicatorManagerConstructorParams,
+  FluidTabsManagerConstructorParams,
 } from "./TabIndicatorManager";
 import useRefCallback from "./useRefCallback";
+import FluidTabsManager from "./FluidTabsManager";
 
 // Simple fallback for React versions before 18
-let startTransition = React.startTransition || ((cb) => cb());
+const startTransition = React.startTransition || ((cb) => cb());
 
 export type ReactiveTabIndicatorHookProps = {
   /**
@@ -13,7 +14,7 @@ export type ReactiveTabIndicatorHookProps = {
    */
   tabPanels: HTMLElement | null;
 } & Pick<
-  TabIndicatorManagerConstructorParams,
+  FluidTabsManagerConstructorParams,
   "switchThreshold" | "animateScrollToOptions" | "value" | "onChange"
 >;
 
@@ -61,7 +62,7 @@ export default function useReactiveTabIndicator<T extends HTMLElement>({
     nodes: [] as T[],
     valueToIndex: new Map<any, number>(),
   });
-  const tabIndicatorManagerRef = useRef<TabIndicatorManager | null>(null);
+  const tabIndicatorManagerRef = useRef<FluidTabsManager | null>(null);
 
   useEffect(() => {
     if (!tabIndicator || !tabPanels || !tabsRef.current) return;
@@ -73,7 +74,7 @@ export default function useReactiveTabIndicator<T extends HTMLElement>({
       }));
     };
 
-    tabIndicatorManagerRef.current = new TabIndicatorManager({
+    tabIndicatorManagerRef.current = new FluidTabsManager({
       value,
       switchThreshold,
       animateScrollToOptions,
@@ -81,7 +82,7 @@ export default function useReactiveTabIndicator<T extends HTMLElement>({
       tabPanels,
       tabs: tabsRef.current.nodes,
       valueToIndex: tabsRef.current.valueToIndex,
-      onChange(value) {
+      changeActiveTabCallback(value) {
         startTransition(() => {
           onChange(value);
         });
@@ -94,7 +95,7 @@ export default function useReactiveTabIndicator<T extends HTMLElement>({
   }, [tabPanels, tabIndicator, tabsRef]);
 
   useEffect(() => {
-    tabIndicatorManagerRef.current?.changeTab(value);
+    tabIndicatorManagerRef.current?.changeActivePanel(value);
   }, [value]);
 
   return { tabIndicatorStyle, tabIndicatorRef, tabsRef };
