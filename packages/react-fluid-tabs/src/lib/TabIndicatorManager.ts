@@ -126,8 +126,7 @@ export default class TabIndicatorManager {
     const scrollLeft = event.target.scrollLeft;
 
     // Scroll progress relative to the panel, e.g., 0.4 means we scrolled 40% of the first panel.
-    // We can't use tabPanelsClientWidth here because we might get an outdated width from a screen orietation change
-    // which will cause a scroll before tabPanelsClientWidth gets a chance to update.
+    // 1.2 means we scrolled 20% of the second panel, etc.
     const relativeScroll =
       scrollLeft /
       this.controller.tabPanelManager.element.getBoundingClientRect().width;

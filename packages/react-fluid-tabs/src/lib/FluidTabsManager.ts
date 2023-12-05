@@ -4,19 +4,21 @@ import TabPanelManager from "./TabPanelManager";
 import TabIndicatorManager from "./TabIndicatorManager";
 import ownerWindow from "./utils/ownerWindow";
 
+
+export type Value = string | number;
 export interface FluidTabsManagerConstructorParams {
-  value: any;
+  value: Value;
   switchThreshold?: number;
   tabIndicator: HTMLElement;
   tabPanels: HTMLElement;
   tabs: HTMLElement[];
-  valueToIndex: Map<any, number>;
+  valueToIndex: Map<Value, number>;
   disableScrollTimeline?: boolean;
 
   /**
    * Setter to control the current active tab.
    */
-  changeActiveTabCallback: (value: any) => void;
+  changeActiveTabCallback: (value: Value) => void;
 
   /**
    * Customize on tab click scroll animation.
@@ -25,14 +27,15 @@ export interface FluidTabsManagerConstructorParams {
   animateScrollToOptions?: IUserOptions;
 }
 
+
 export default class FluidTabsManager {
-  public value: any;
+  public value: Value;
   public tabs: HTMLElement[];
   public tabIndicator: HTMLElement;
-  public valueToIndex: Map<any, number>;
+  public valueToIndex: Map<Value, number>;
   public canChangeTab = true;
   public canAnimateScrollToPanel = true;
-  public changeActiveTabCallback: (value: any) => void;
+  public changeActiveTabCallback: (value: Value) => void;
   public switchThreshold: number;
   private resizeObserver?: ResizeObserver;
   private win: Window;
@@ -96,7 +99,7 @@ export default class FluidTabsManager {
     return this.tabs[this.valueToIndex.get(this.value)!];
   };
 
-  getIndex = (value?: any) => {
+  getIndex = (value?: Value) => {
     return this.valueToIndex.get(value ?? this.value)!;
   };
 
@@ -105,7 +108,7 @@ export default class FluidTabsManager {
     this.tabPanelManager.resizeHandler();
   };
 
-  changeActiveTab = (value: any) => {
+  changeActiveTab = (value: Value) => {
     if (this.canChangeTab) {
       this.changeActiveTabCallback(value);
 
@@ -114,7 +117,7 @@ export default class FluidTabsManager {
     }
   }
 
-  changeActivePanel = (value: any) => {
+  changeActivePanel = async (value: Value) => {
     this.value = value;
     this.canChangeTab = true;
 
@@ -127,6 +130,10 @@ export default class FluidTabsManager {
 
     const index = this.getIndex(value);
     
-    this.tabPanelManager.animateToPanel(index);
+    const hasSwitchedToPanel = await this.tabPanelManager.animateToPanel(index);
+
+    if (hasSwitchedToPanel) {
+      this.canChangeTab = true;
+    }
   };
 }

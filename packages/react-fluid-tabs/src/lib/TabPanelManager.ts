@@ -30,16 +30,19 @@ export default class TabPanelManager {
     this.controller = controller;
   }
 
+  getIndexScrollPosition = (index: number = this.controller.getIndex()) => {
+    return index * this.element.getBoundingClientRect().width;
+  }
+
   resizeHandler = () => {
-    this.element.scrollLeft =
-      this.controller.getIndex() * this.element.clientWidth;
+    this.element.scrollLeft = this.getIndexScrollPosition();
   };
 
   animateToPanel = (index: number) => {
     /* Animate scrolling to the relevant tab panel */
     this.element.style.scrollSnapType = "none";
 
-    animateScrollTo([index * this.element.getBoundingClientRect().width, 0], {
+    return animateScrollTo([this.getIndexScrollPosition(index), 0], {
       minDuration: 500,
       maxDuration: 800,
       easing: easeInOutCubic,
@@ -49,15 +52,14 @@ export default class TabPanelManager {
     })
       .then((hasScrolledToPosition) => {
         if (hasScrolledToPosition) {
-          this.controller.canChangeTab = true;
-
           this.element.style.scrollSnapType = "x mandatory";
 
           // On ios < 15, setting scroll-snap-type resets the scroll position
           // so we need to reajust it to where it was before.
-          this.element.scrollLeft =
-            index * this.element.getBoundingClientRect().width;
+          this.element.scrollLeft = this.getIndexScrollPosition(index);
         }
+
+        return hasScrolledToPosition;
       })
       .catch(() => {
         this.element.style.scrollSnapType = "x mandatory";

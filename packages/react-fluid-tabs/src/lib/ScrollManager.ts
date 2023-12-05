@@ -1,6 +1,5 @@
 import { Direction } from "./utils";
 import afterFrame from "./utils/afterFrame";
-import ownerWindow from "./utils/ownerWindow";
 
 export interface ScrollManagerConstructorParams {
   scrollTarget: HTMLElement;
