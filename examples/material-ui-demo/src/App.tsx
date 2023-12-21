@@ -12,7 +12,7 @@ import {
   FluidTabPanel,
   FluidTabPanels,
   FluidTabs,
-} from "react-fluid-tabs";
+} from "@fluid-tabs/react";
 import {
   BrowserRouter,
   Routes,

@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "@fluid-tabs/core": ["packages/fluid-tabs-core/src/lib"],
+      "@fluid-tabs/react": ["packages/fluid-tabs-react/src/lib"],
+    },
+    "baseUrl": "."
+  }
+}
