@@ -559,7 +559,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fluid-tabs/core@workspace:*, @fluid-tabs/core@workspace:packages/fluid-tabs-core":
+"@fluid-tabs/core@*, @fluid-tabs/core@workspace:packages/fluid-tabs-core":
   version: 0.0.0-use.local
   resolution: "@fluid-tabs/core@workspace:packages/fluid-tabs-core"
   dependencies:
@@ -569,11 +569,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@fluid-tabs/react@workspace:*, @fluid-tabs/react@workspace:packages/fluid-tabs-react":
+"@fluid-tabs/react@*, @fluid-tabs/react@workspace:packages/fluid-tabs-react":
   version: 0.0.0-use.local
   resolution: "@fluid-tabs/react@workspace:packages/fluid-tabs-react"
   dependencies:
-    "@fluid-tabs/core": "workspace:*"
+    "@fluid-tabs/core": "*"
     "@testing-library/jest-dom": ^5.16.4
     "@testing-library/react": ^13.3.0
     "@testing-library/react-hooks": ^8.0.1
@@ -5000,7 +5000,7 @@ __metadata:
   dependencies:
     "@emotion/react": ^11.9.3
     "@emotion/styled": ^11.9.3
-    "@fluid-tabs/react": "workspace:*"
+    "@fluid-tabs/react": "*"
     "@material-ui/core": ^4.12.4
     "@material-ui/styles": ^4.11.5
     "@mui/material": ^5.9.2

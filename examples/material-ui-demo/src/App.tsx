@@ -210,8 +210,6 @@ function AppCustomTabs({ tabPanels, children }) {
       // value: routeMatch.params.tab,
       // onChange: (val) => navigate(`./${val}`),
       tabPanels,
-      preemptive: true,
-      // lockScrollWhenSwiping: true,
     });
 
   let tabIndicatorProps = React.useMemo(
@@ -284,8 +282,6 @@ function AppMuiTabs({ tabPanels, children }) {
       value,
       onChange: setValue,
       tabPanels,
-      preemptive: true,
-      lockScrollWhenSwiping: false,
     });
 
   const onChange = React.useCallback((e, val) => {
@@ -304,7 +300,6 @@ function AppMuiTabs({ tabPanels, children }) {
   );
 
   return (
-    <>
       <FluidTabs
         component={TabsMemo}
         onChange={onChange}
@@ -317,8 +312,6 @@ function AppMuiTabs({ tabPanels, children }) {
       >
         {children}
       </FluidTabs>
-      {/* <div ref={tabIndicatorRef} style={{...tabIndicatorStyle, height: 2, background: 'blue'}}></div> */}
-    </>
   );
 }
 

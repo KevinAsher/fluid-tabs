@@ -10,7 +10,7 @@
   "dependencies": {
     "@emotion/react": "^11.9.3",
     "@emotion/styled": "^11.9.3",
-    "@fluid-tabs/react": "workspace:*",
+    "@fluid-tabs/react": "*",
     "@material-ui/core": "^4.12.4",
     "@material-ui/styles": "^4.11.5",
     "@mui/material": "^5.9.2",

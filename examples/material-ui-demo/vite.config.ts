@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "react-fluid-tabs": "react-fluid-tabs/index.ts",
+      "@fluid-tabs/react": "@fluid-tabs/react/index.ts",
     },
   },
   build: {
