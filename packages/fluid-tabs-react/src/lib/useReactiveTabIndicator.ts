@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { FluidTabsManager, Value } from "@fluid-tabs/core";
 import useRefCallback from "./useRefCallback";
 
@@ -16,7 +16,7 @@ export type ReactiveTabIndicatorHookProps = {
   onChange: FluidTabsManagerConstructorParams['changeActiveTabCallback'];
 } & Pick<
   FluidTabsManagerConstructorParams,
-  "switchThreshold" | "animateScrollToOptions" | "value"
+  "switchThreshold" | "animateScrollToOptions" | "value" | "disableScrollTimeline"
 >;
 
 interface TabsRef<T> {
@@ -25,15 +25,18 @@ interface TabsRef<T> {
 }
 
 export interface ReactiveTabIndicatorHookValues<I, T = I> {
-  /**
-   * Required CSS styles for the tab indicator element.
-   */
-  tabIndicatorStyle: React.CSSProperties;
+  tabIndicatorProps: {
+    /**
+     * Required CSS styles for the tab indicator element.
+     */
+    style: React.CSSProperties;
 
-  /**
-   * A ref to the tab indicator element.
-   */
-  tabIndicatorRef: React.RefCallback<HTMLElement>;
+    /**
+     * A ref to the tab indicator element.
+     */
+    ref: React.RefCallback<I>;
+
+  }
 
   /**
    * A special ref useed as an instance variable required to get the tab elements,
@@ -55,6 +58,7 @@ export default function useReactiveTabIndicator<T extends HTMLElement>({
   onChange,
   switchThreshold,
   animateScrollToOptions,
+  disableScrollTimeline,
 }: ReactiveTabIndicatorHookProps): ReactiveTabIndicatorHookValues<T> {
   const [tabIndicatorStyle, setTabIndicatorStyle] =
     useState<React.CSSProperties>(initialTabIndicatorStyle);
@@ -83,6 +87,7 @@ export default function useReactiveTabIndicator<T extends HTMLElement>({
       tabPanels,
       tabs: tabsRef.current.nodes,
       valueToIndex: tabsRef.current.valueToIndex,
+      disableScrollTimeline,
       changeActiveTabCallback(value) {
         startTransition(() => {
           onChange(value);
@@ -99,5 +104,13 @@ export default function useReactiveTabIndicator<T extends HTMLElement>({
     tabIndicatorManagerRef.current?.changeActivePanel(value);
   }, [value]);
 
-  return { tabIndicatorStyle, tabIndicatorRef, tabsRef };
+  const tabIndicatorProps = useMemo(
+    () => ({
+      ref: tabIndicatorRef,
+      style: tabIndicatorStyle,
+    }),
+    [tabIndicatorStyle],
+  );
+
+  return { tabIndicatorProps, tabsRef };
 }

@@ -203,22 +203,13 @@ function AppCustomTabs({ tabPanels, children }) {
 
   // const navigate = useNavigate();
   const [value, setValue] = useState(1);
-  const { tabIndicatorStyle, tabIndicatorRef, tabsRef } =
-    useReactiveTabIndicator({
-      value,
-      onChange: setValue,
-      // value: routeMatch.params.tab,
-      // onChange: (val) => navigate(`./${val}`),
-      tabPanels,
-    });
-
-  let tabIndicatorProps = React.useMemo(
-    () => ({
-      ref: tabIndicatorRef,
-      style: tabIndicatorStyle,
-    }),
-    [tabIndicatorStyle],
-  );
+  const { tabIndicatorProps, tabsRef } = useReactiveTabIndicator({
+    value,
+    onChange: setValue,
+    // value: routeMatch.params.tab,
+    // onChange: (val) => navigate(`./${val}`),
+    tabPanels,
+  });
 
   return (
     <FluidTabs
@@ -237,22 +228,13 @@ function AppCustomTabs({ tabPanels, children }) {
 function AppCustomTabsWithRoutes({ tabPanels, children }) {
   const { tab } = useParams();
   const navigate = useNavigate();
-  const { tabIndicatorStyle, tabIndicatorRef, tabsRef } =
-    useReactiveTabIndicator({
-      value: tab,
-      onChange: (val) => {
-        navigate(`../${val}`);
-      },
-      tabPanels,
-    });
-
-  const tabIndicatorProps = React.useMemo(
-    () => ({
-      ref: tabIndicatorRef,
-      style: tabIndicatorStyle,
-    }),
-    [tabIndicatorStyle],
-  );
+  const { tabIndicatorProps, tabsRef } = useReactiveTabIndicator({
+    value: tab,
+    onChange: (val) => {
+      navigate(`../${val}`);
+    },
+    tabPanels,
+  });
 
   return (
     <FluidTabs
@@ -275,65 +257,44 @@ function AppMuiTabs({ tabPanels, children }) {
 
   // const navigate = useNavigate();
   const [value, setValue] = useState(1);
-  const { tabIndicatorStyle, tabIndicatorRef, tabsRef } =
-    useReactiveTabIndicator({
-      // value: routeMatch.params.tab,
-      // onChange: (val) => navigate(`./${val}`),
-      value,
-      onChange: setValue,
-      tabPanels,
-    });
+  const { tabIndicatorProps, tabsRef } = useReactiveTabIndicator({
+    // value: routeMatch.params.tab,
+    // onChange: (val) => navigate(`./${val}`),
+    value,
+    onChange: setValue,
+    tabPanels,
+  });
 
   const onChange = React.useCallback((e, val) => {
     setValue(val);
   }, []);
 
-  const tabIndicatorProps = React.useMemo(
-    () => ({
-      ref: tabIndicatorRef,
-      style: {
-        ...tabIndicatorStyle,
-        // width: 0,
-      },
-    }),
-    [tabIndicatorStyle],
-  );
-
   return (
-      <FluidTabs
-        component={TabsMemo}
-        onChange={onChange}
-        value={value}
-        // value={routeMatch.params.tab}
-        TabIndicatorProps={tabIndicatorProps}
-        variant="scrollable"
-        scrollButtons={false}
-        tabsRef={tabsRef}
-      >
-        {children}
-      </FluidTabs>
+    <FluidTabs
+      component={TabsMemo}
+      onChange={onChange}
+      value={value}
+      // value={routeMatch.params.tab}
+      TabIndicatorProps={tabIndicatorProps}
+      variant="scrollable"
+      scrollButtons={false}
+      tabsRef={tabsRef}
+    >
+      {children}
+    </FluidTabs>
   );
 }
 
 function AppMuiTabsWithRoutes({ tabPanels, children }) {
   const { tab } = useParams();
   const navigate = useNavigate();
-  const { tabIndicatorStyle, tabIndicatorRef, tabsRef } =
-    useReactiveTabIndicator({
-      value: tab,
-      onChange: (val) => {
-        navigate(`../${val}`);
-      },
-      tabPanels,
-    });
-
-  const tabIndicatorProps = React.useMemo(
-    () => ({
-      ref: tabIndicatorRef,
-      style: tabIndicatorStyle,
-    }),
-    [tabIndicatorStyle],
-  );
+  const { tabIndicatorProps, tabsRef } = useReactiveTabIndicator({
+    value: tab,
+    onChange: (val) => {
+      navigate(`../${val}`);
+    },
+    tabPanels,
+  });
 
   return (
     <FluidTabs
@@ -532,7 +493,7 @@ function App() {
     <ThemeProvider theme={theme}>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Navigate to="/custom-tabs" />} /> 
+          <Route path="/" element={<Navigate to="/custom-tabs" />} />
           <Route path="*" element={<AppInner />} />
         </Routes>
       </BrowserRouter>
