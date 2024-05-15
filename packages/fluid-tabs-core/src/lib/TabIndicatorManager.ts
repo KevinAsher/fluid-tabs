@@ -1,5 +1,6 @@
 import {
   calculateTransform,
+  Direction,
   getKeyByValue,
   getWorkingTabs,
   transformCss,
@@ -8,11 +9,14 @@ import FluidTabsManager from "./FluidTabsManager";
 
 export interface TabIndicatorManagerConstructorParams {
   element: HTMLElement;
+  tabPanels: HTMLElement;
+  tabs: HTMLElement[];
   disableScrollTimeline?: boolean;
-  controller: FluidTabsManager;
 }
 
 export default class TabIndicatorManager {
+  private tabPanels: HTMLElement;
+  private tabs: HTMLElement[];
   private previousTab: HTMLElement | null = null;
   public element: HTMLElement;
 
@@ -20,63 +24,45 @@ export default class TabIndicatorManager {
   private scrollTimeline: ScrollTimeline | null = null;
   private tabIndicatorAnimation: Animation | null = null;
   private disableScrollTimeline = false;
-  private controller: FluidTabsManager;
 
   constructor({
     element,
+    tabPanels,
+    tabs,
     disableScrollTimeline,
-    controller,
   }: TabIndicatorManagerConstructorParams) {
     this.element = element;
+    this.tabPanels = tabPanels;
+    this.tabs = tabs;
     this.disableScrollTimeline =
       !("ScrollTimeline" in window) || disableScrollTimeline;
-    this.controller = controller;
 
     if (!this.disableScrollTimeline) {
       // @ts-expect-error ScrollTimeline is not yet in the TS
       this.scrollTimeline = new ScrollTimeline({
-        source: this.controller.tabPanelManager.element,
+        source: tabPanels,
         axis: "inline",
       });
     }
   }
 
-  resizeHandler = () => {
+  resizeHandler = (currentTab: HTMLElement) => {
     this.element.style.transform = transformCss(
-      this.controller.getCurrentTab().offsetLeft,
+      currentTab.offsetLeft,
       1,
     );
     this.element.style.width = `${
-      this.controller.getCurrentTab().clientWidth
+      currentTab.clientWidth
     }px`;
   };
 
-  scrollDrivenTabChange = (relativeScroll: number) => {
-    const closestIndexFromScrollPosition = Math.round(relativeScroll);
-    const currentIndex = this.controller.getIndex()!;
-    const surpassedScrollThreshold =
-      Math.abs(relativeScroll - currentIndex) > this.controller.switchThreshold;
 
-    if (
-      closestIndexFromScrollPosition !== currentIndex &&
-      surpassedScrollThreshold
-    ) {
-      this.controller.changeActiveTab(
-        getKeyByValue(
-          this.controller.valueToIndex,
-          closestIndexFromScrollPosition,
-        ),
-      );
-    }
-  };
-
-  updateTabIndicator = (relativeScroll: number) => {
-    const direction = this.controller.scrollManager.getScrollDirection();
+  update = ({relativeScroll, direction}: {relativeScroll: number, direction: Direction}) => {
 
     const { currentTab, nextTab } = getWorkingTabs({
       direction,
       relativeScroll,
-      tabs: this.controller.tabs,
+      tabs: this.tabs,
     });
 
     if (this.disableScrollTimeline) {
@@ -102,7 +88,7 @@ export default class TabIndicatorManager {
       this.element.style.width = currentTab.clientWidth + "px";
 
       if (!this.disableScrollTimeline) {
-        const transform = this.controller.tabs.map((tab) => {
+        const transform = this.tabs.map((tab) => {
           const scaleX = tab.clientWidth / currentTab.clientWidth;
           const translateX = tab.offsetLeft;
 
@@ -120,22 +106,6 @@ export default class TabIndicatorManager {
       }
     });
   };
+  
 
-  scrollHandler = (event: any) => {
-    // Total amount of pixels scrolled in the scroll container
-    const scrollLeft = event.target.scrollLeft;
-
-    // Scroll progress relative to the panel, e.g., 0.4 means we scrolled 40% of the first panel.
-    // 1.2 means we scrolled 20% of the second panel, etc.
-    const relativeScroll =
-      scrollLeft /
-      this.controller.tabPanelManager.element.getBoundingClientRect().width;
-
-    // If we are overscroll beyond the boundaries of the scroll container, we just return and do nothing (e.g. Safari browser).
-    if (relativeScroll < 0 || relativeScroll > this.controller.tabs.length - 1)
-      return;
-
-    this.scrollDrivenTabChange(relativeScroll);
-    this.updateTabIndicator(relativeScroll);
-  };
 }

@@ -23,12 +23,14 @@ export default class ScrollManager {
     this.axis = axis;
     this.scrollHandler = scrollHandler;
 
-    this.scrollTarget.addEventListener("scroll", () => {
-      if (!this.__updateScheduled) {
-        this.scheduleUpdate();
-        this.__updateScheduled = true;
-      }
-    });
+    this.scrollTarget.addEventListener("scroll", this.initialScrollHandler);
+  }
+
+  initialScrollHandler = () => {
+    if (!this.__updateScheduled) {
+      this.scheduleUpdate();
+      this.__updateScheduled = true;
+    }
   }
 
   getScrollPosition = () => {
@@ -59,7 +61,7 @@ export default class ScrollManager {
 
   update = () => {
     if (this.hasScrolled()) {
-      this.scrollHandler && this.scrollHandler({ target: this.scrollTarget });
+      this.scrollHandler?.({ target: this.scrollTarget });
       this.previousScrollPosition = this.getScrollPosition();
       this.scheduleUpdate();
     } else {
@@ -69,6 +71,6 @@ export default class ScrollManager {
 
   cleanup = () => {
     this.scrollHandler &&
-      this.scrollTarget?.removeEventListener("scroll", this.scrollHandler);
+      this.scrollTarget?.removeEventListener("scroll", this.initialScrollHandler);
   };
 }

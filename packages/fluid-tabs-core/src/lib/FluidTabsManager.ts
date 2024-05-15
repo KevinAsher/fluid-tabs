@@ -3,7 +3,7 @@ import ScrollManager from "./ScrollManager";
 import TabPanelManager from "./TabPanelManager";
 import TabIndicatorManager from "./TabIndicatorManager";
 import ownerWindow from "./utils/ownerWindow";
-
+import { getKeyByValue } from "./utils";
 
 export type Value = string | number;
 export interface FluidTabsManagerConstructorParams {
@@ -26,7 +26,6 @@ export interface FluidTabsManagerConstructorParams {
    */
   animateScrollToOptions?: IUserOptions;
 }
-
 
 export default class FluidTabsManager {
   public value: Value;
@@ -62,37 +61,39 @@ export default class FluidTabsManager {
     this.switchThreshold = switchThreshold;
 
     this.tabPanelManager = new TabPanelManager({
-      controller: this,
       element: tabPanels,
-      animateScrollToOptions
+      animateScrollToOptions,
+      getIndex: this.getIndex,
     });
 
     this.tabIndicatorManager = new TabIndicatorManager({
-      controller: this,
+      tabPanels: tabPanels,
+      tabs: tabs,
       element: tabIndicator,
       disableScrollTimeline,
     });
 
     this.scrollManager = new ScrollManager({
-      scrollTarget: this.tabPanelManager.element,
+      scrollTarget: tabPanels,
       axis: "x",
-      scrollHandler: this.tabIndicatorManager.scrollHandler,
+      scrollHandler: this.scrollHandler,
     });
 
     this.win = ownerWindow(tabPanels);
-    this.resizeHandler && this.win.addEventListener("resize", this.resizeHandler);
+    this.resizeHandler &&
+      this.win.addEventListener("resize", this.resizeHandler);
 
     if (typeof ResizeObserver !== "undefined" && this.resizeHandler) {
       this.resizeObserver = new ResizeObserver(this.resizeHandler);
       this.resizeObserver.observe(tabPanels);
     }
-
   }
 
   cleanup = () => {
     this.scrollManager.cleanup();
     this.resizeObserver?.disconnect();
-    this.resizeHandler && this.win.removeEventListener("resize", this.resizeHandler);
+    this.resizeHandler &&
+      this.win.removeEventListener("resize", this.resizeHandler);
   };
 
   getCurrentTab = () => {
@@ -104,7 +105,7 @@ export default class FluidTabsManager {
   };
 
   resizeHandler = () => {
-    this.tabIndicatorManager.resizeHandler();
+    this.tabIndicatorManager.resizeHandler(this.getCurrentTab());
     this.tabPanelManager.resizeHandler();
   };
 
@@ -115,7 +116,7 @@ export default class FluidTabsManager {
       this.canAnimateScrollToPanel = false;
       this.canChangeTab = false;
     }
-  }
+  };
 
   changeActivePanel = async (value: Value) => {
     this.value = value;
@@ -129,11 +130,47 @@ export default class FluidTabsManager {
     this.canChangeTab = false;
 
     const index = this.getIndex(value);
-    
+
     const hasSwitchedToPanel = await this.tabPanelManager.animateToPanel(index);
 
     if (hasSwitchedToPanel) {
       this.canChangeTab = true;
+    }
+  };
+
+  scrollHandler = (event: any) => {
+    // Total amount of pixels scrolled in the scroll container
+    const scrollLeft = event.target.scrollLeft;
+
+    // Scroll progress relative to the panel, e.g., 0.4 means we scrolled 40% of the first panel.
+    // 1.2 means we scrolled 20% of the second panel, etc.
+    const relativeScroll =
+      scrollLeft / this.tabPanelManager.element.getBoundingClientRect().width;
+
+    // If we are overscroll beyond the boundaries of the scroll container, we just return and do nothing (e.g. Safari browser).
+    if (relativeScroll < 0 || relativeScroll > this.tabs.length - 1) return;
+
+    this.scrollDrivenTabChange(relativeScroll);
+
+    this.tabIndicatorManager.update({
+      relativeScroll,
+      direction: this.scrollManager.getScrollDirection(),
+    });
+  };
+
+  scrollDrivenTabChange = (relativeScroll: number) => {
+    const closestIndexFromScrollPosition = Math.round(relativeScroll);
+    const currentIndex = this.getIndex()!;
+    const surpassedScrollThreshold =
+      Math.abs(relativeScroll - currentIndex) > this.switchThreshold;
+
+    if (
+      closestIndexFromScrollPosition !== currentIndex &&
+      surpassedScrollThreshold
+    ) {
+      this.changeActiveTab(
+        getKeyByValue(this.valueToIndex, closestIndexFromScrollPosition),
+      );
     }
   };
 }

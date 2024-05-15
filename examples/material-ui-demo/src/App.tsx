@@ -246,7 +246,7 @@ function AppCustomTabsWithRoutes({ tabPanels, children }) {
       tabPanels,
     });
 
-  let tabIndicatorProps = React.useMemo(
+  const tabIndicatorProps = React.useMemo(
     () => ({
       ref: tabIndicatorRef,
       style: tabIndicatorStyle,
@@ -288,7 +288,7 @@ function AppMuiTabs({ tabPanels, children }) {
     setValue(val);
   }, []);
 
-  let tabIndicatorProps = React.useMemo(
+  const tabIndicatorProps = React.useMemo(
     () => ({
       ref: tabIndicatorRef,
       style: {
@@ -327,7 +327,7 @@ function AppMuiTabsWithRoutes({ tabPanels, children }) {
       tabPanels,
     });
 
-  let tabIndicatorProps = React.useMemo(
+  const tabIndicatorProps = React.useMemo(
     () => ({
       ref: tabIndicatorRef,
       style: tabIndicatorStyle,
@@ -384,7 +384,6 @@ function AppInner() {
   return (
     <div className="App">
       <Routes>
-        {/* <Route path="/" element={<Navigate to="/p" />} />  */}
         <Route
           path="/custom-tabs"
           element={
@@ -515,7 +514,7 @@ function AppInner() {
             //   <Route
             //     path={"*"}
             //     element={
-            <FluidTabPanel>
+            <FluidTabPanel key={i}>
               <StyledTabPanelContent img={img} title={title} />
             </FluidTabPanel>
           ),
@@ -533,7 +532,7 @@ function App() {
     <ThemeProvider theme={theme}>
       <BrowserRouter>
         <Routes>
-          {/* <Route path="/" element={<Navigate to="/p" />} />  */}
+          <Route path="/" element={<Navigate to="/custom-tabs" />} /> 
           <Route path="*" element={<AppInner />} />
         </Routes>
       </BrowserRouter>

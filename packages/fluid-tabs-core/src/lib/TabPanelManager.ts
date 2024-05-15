@@ -1,12 +1,11 @@
 import animateScrollTo, { type IUserOptions } from "animated-scroll-to";
-import FluidTabsManager from "./FluidTabsManager";
 
 const easeInOutCubic = (t: number): number =>
   t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
 
 export interface TabPanelManagerConstructorParams {
   element: HTMLElement;
-  controller: FluidTabsManager;
+  getIndex: () => number;
 
   /**
    * Customize on tab click scroll animation.
@@ -16,33 +15,33 @@ export interface TabPanelManagerConstructorParams {
 }
 
 export default class TabPanelManager {
-  public element: HTMLElement;
-  private animateScrollToOptions?: IUserOptions;
-  public controller: FluidTabsManager;
+  public element: TabPanelManagerConstructorParams["element"];
+  private animateScrollToOptions?: TabPanelManagerConstructorParams["animateScrollToOptions"];
+  private getIndex: TabPanelManagerConstructorParams["getIndex"];
 
   constructor({
     element,
     animateScrollToOptions,
-    controller,
+    getIndex,
   }: TabPanelManagerConstructorParams) {
     this.element = element;
     this.animateScrollToOptions = animateScrollToOptions;
-    this.controller = controller;
+    this.getIndex = getIndex;
   }
 
-  getIndexScrollPosition = (index: number = this.controller.getIndex()) => {
+  getScrollPosition = (index: number = this.getIndex()) => {
     return index * this.element.getBoundingClientRect().width;
   }
 
   resizeHandler = () => {
-    this.element.scrollLeft = this.getIndexScrollPosition();
+    this.element.scrollLeft = this.getScrollPosition();
   };
 
   animateToPanel = (index: number) => {
     /* Animate scrolling to the relevant tab panel */
     this.element.style.scrollSnapType = "none";
 
-    return animateScrollTo([this.getIndexScrollPosition(index), 0], {
+    return animateScrollTo([this.getScrollPosition(index), 0], {
       minDuration: 500,
       maxDuration: 800,
       easing: easeInOutCubic,
@@ -56,7 +55,7 @@ export default class TabPanelManager {
 
           // On ios < 15, setting scroll-snap-type resets the scroll position
           // so we need to reajust it to where it was before.
-          this.element.scrollLeft = this.getIndexScrollPosition(index);
+          this.element.scrollLeft = this.getScrollPosition(index);
         }
 
         return hasScrolledToPosition;
