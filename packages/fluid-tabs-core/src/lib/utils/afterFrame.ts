@@ -4,7 +4,7 @@ let callback: (() => void) | null = null;
 
 let channel: MessageChannel | null = new MessageChannel();
 
-let postMessage = function (this: MessagePort) {
+const postMessage = function (this: MessagePort) {
   this.postMessage(undefined);
 }.bind(channel.port2);
 
