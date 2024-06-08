@@ -1,18 +1,12 @@
 import { Direction } from "./utils";
 import afterFrame from "./utils/afterFrame";
 
-export interface ScrollManagerConstructorParams {
-  scrollTarget: HTMLElement;
-  axis: "x" | "y";
-  scrollHandler?: (value?: any) => void;
-}
-
 export default class ScrollManager {
-  private scrollTarget: HTMLElement;
+  private scrollTarget: ScrollManagerConstructorParams["scrollTarget"];
   private previousScrollPosition = 0;
   private __updateScheduled = false;
-  private axis;
-  private scrollHandler?: (value?: any) => void;
+  private axis: ScrollManagerConstructorParams["axis"] ;
+  private scrollHandler: ScrollManagerConstructorParams["scrollHandler"];
 
   constructor({
     scrollTarget,
@@ -31,12 +25,22 @@ export default class ScrollManager {
       this.scheduleUpdate();
       this.__updateScheduled = true;
     }
-  }
+  };
 
   getScrollPosition = () => {
     return this.axis === "x"
       ? this.scrollTarget.scrollLeft
       : this.scrollTarget.scrollTop;
+  };
+
+  getScrollTargetSize = () => {
+    const { width, height } = this.scrollTarget.getBoundingClientRect();
+
+    return this.axis === "x" ? width : height;
+  };
+
+  getRelativeScrollPosition = () => {
+    return this.getScrollPosition() / this.getScrollTargetSize();
   };
 
   getScrollDirection = () => {
@@ -61,7 +65,9 @@ export default class ScrollManager {
 
   update = () => {
     if (this.hasScrolled()) {
-      this.scrollHandler?.({ target: this.scrollTarget });
+      // Scroll progress relative to the panel, e.g., 0.4 means we scrolled 40% of the first panel.
+      // 1.2 means we scrolled 20% of the second panel, etc.
+      this.scrollHandler?.(this.getRelativeScrollPosition());
       this.previousScrollPosition = this.getScrollPosition();
       this.scheduleUpdate();
     } else {
@@ -71,6 +77,15 @@ export default class ScrollManager {
 
   cleanup = () => {
     this.scrollHandler &&
-      this.scrollTarget?.removeEventListener("scroll", this.initialScrollHandler);
+      this.scrollTarget?.removeEventListener(
+        "scroll",
+        this.initialScrollHandler,
+      );
   };
+}
+
+export interface ScrollManagerConstructorParams {
+  scrollTarget: HTMLElement;
+  axis: "x" | "y";
+  scrollHandler: (relativeScrollPosition: number) => void;
 }

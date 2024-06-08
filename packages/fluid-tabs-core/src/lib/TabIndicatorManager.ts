@@ -1,24 +1,14 @@
 import {
   calculateTransform,
   Direction,
-  getKeyByValue,
   getWorkingTabs,
   transformCss,
 } from "./utils";
-import FluidTabsManager from "./FluidTabsManager";
-
-export interface TabIndicatorManagerConstructorParams {
-  element: HTMLElement;
-  tabPanels: HTMLElement;
-  tabs: HTMLElement[];
-  disableScrollTimeline?: boolean;
-}
 
 export default class TabIndicatorManager {
-  private tabPanels: HTMLElement;
-  private tabs: HTMLElement[];
+  private tabs: TabIndicatorManagerConstructorParams["tabs"];
   private previousTab: HTMLElement | null = null;
-  public element: HTMLElement;
+  public element: TabIndicatorManagerConstructorParams["element"];
 
   // @ts-expect-error ScrollTimeline is not yet in the TS
   private scrollTimeline: ScrollTimeline | null = null;
@@ -32,7 +22,6 @@ export default class TabIndicatorManager {
     disableScrollTimeline,
   }: TabIndicatorManagerConstructorParams) {
     this.element = element;
-    this.tabPanels = tabPanels;
     this.tabs = tabs;
     this.disableScrollTimeline =
       !("ScrollTimeline" in window) || disableScrollTimeline;
@@ -47,18 +36,17 @@ export default class TabIndicatorManager {
   }
 
   resizeHandler = (currentTab: HTMLElement) => {
-    this.element.style.transform = transformCss(
-      currentTab.offsetLeft,
-      1,
-    );
-    this.element.style.width = `${
-      currentTab.clientWidth
-    }px`;
+    this.element.style.transform = transformCss(currentTab.offsetLeft, 1);
+    this.element.style.width = `${currentTab.clientWidth}px`;
   };
 
-
-  update = ({relativeScroll, direction}: {relativeScroll: number, direction: Direction}) => {
-
+  update = ({
+    relativeScroll,
+    direction,
+  }: {
+    relativeScroll: number;
+    direction: Direction;
+  }) => {
     const { currentTab, nextTab } = getWorkingTabs({
       direction,
       relativeScroll,
@@ -100,12 +88,18 @@ export default class TabIndicatorManager {
           { transform },
           {
             fill: "both",
+            // @ts-expect-error ScrollTimeline is not yet in the TS
             timeline: this.scrollTimeline,
           },
         );
       }
     });
   };
-  
+}
 
+export interface TabIndicatorManagerConstructorParams {
+  element: HTMLElement;
+  tabPanels: HTMLElement;
+  tabs: HTMLElement[];
+  disableScrollTimeline?: boolean;
 }

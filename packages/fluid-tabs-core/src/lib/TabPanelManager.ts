@@ -1,19 +1,5 @@
 import animateScrollTo, { type IUserOptions } from "animated-scroll-to";
 
-const easeInOutCubic = (t: number): number =>
-  t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
-
-export interface TabPanelManagerConstructorParams {
-  element: HTMLElement;
-  getIndex: () => number;
-
-  /**
-   * Customize on tab click scroll animation.
-   * @see https://github.com/Stanko/animated-scroll-to#options
-   */
-  animateScrollToOptions?: IUserOptions;
-}
-
 export default class TabPanelManager {
   public element: TabPanelManagerConstructorParams["element"];
   private animateScrollToOptions?: TabPanelManagerConstructorParams["animateScrollToOptions"];
@@ -64,4 +50,18 @@ export default class TabPanelManager {
         this.element.style.scrollSnapType = "x mandatory";
       });
   };
+}
+
+const easeInOutCubic = (t: number): number =>
+  t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
+
+export interface TabPanelManagerConstructorParams {
+  element: HTMLElement;
+  getIndex: () => number;
+
+  /**
+   * Customize on tab click scroll animation.
+   * @see https://github.com/Stanko/animated-scroll-to#options
+   */
+  animateScrollToOptions?: IUserOptions;
 }
