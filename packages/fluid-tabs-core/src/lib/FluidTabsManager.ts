@@ -8,7 +8,7 @@ import { getKeyByValue } from "./utils";
 export type Value = string | number;
 export interface FluidTabsManagerConstructorParams {
   value: Value;
-  switchThreshold?: number;
+  switchThreshold?: ThresholdRange;
   tabIndicator: HTMLElement;
   tabPanels: HTMLElement;
   tabs: HTMLElement[];
@@ -27,6 +27,8 @@ export interface FluidTabsManagerConstructorParams {
   animateScrollToOptions?: IUserOptions;
 }
 
+type ThresholdRange = 0.5 | 0.6 | 0.7 | 0.8 | 0.9;
+
 export default class FluidTabsManager {
   public value: Value;
   public tabs: HTMLElement[];
@@ -35,7 +37,7 @@ export default class FluidTabsManager {
   public canChangeTab = true;
   public canAnimateScrollToPanel = true;
   public changeActiveTabCallback: (value: Value) => void;
-  public switchThreshold: number;
+  public switchThreshold: ThresholdRange;
   private resizeObserver?: ResizeObserver;
   private win: Window;
 
