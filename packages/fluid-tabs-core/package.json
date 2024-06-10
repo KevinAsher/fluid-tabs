@@ -14,7 +14,7 @@
     "animated-scroll-to": "^2.3.0"
   },
   "devDependencies": {
-    "typescript": "^5.3.3",
+    "typescript": "^5.4.5",
     "vite": "^3.0.3"
   },
   "files": [

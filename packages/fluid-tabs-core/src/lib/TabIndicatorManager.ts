@@ -88,7 +88,6 @@ export default class TabIndicatorManager {
           { transform },
           {
             fill: "both",
-            // @ts-expect-error ScrollTimeline is not yet in the TS
             timeline: this.scrollTimeline,
           },
         );

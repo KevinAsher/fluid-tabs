@@ -1,4 +1,5 @@
 {
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "paths": {
       "@fluid-tabs/core": ["packages/fluid-tabs-core/src/lib"],
