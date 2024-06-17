@@ -5,7 +5,7 @@ export default class ScrollManager {
   private scrollTarget: ScrollManagerConstructorParams["scrollTarget"];
   private previousScrollPosition = 0;
   private __updateScheduled = false;
-  private axis: ScrollManagerConstructorParams["axis"] ;
+  private axis: ScrollManagerConstructorParams["axis"];
   private scrollHandler: ScrollManagerConstructorParams["scrollHandler"];
 
   constructor({
@@ -76,11 +76,7 @@ export default class ScrollManager {
   };
 
   cleanup = () => {
-    this.scrollHandler &&
-      this.scrollTarget?.removeEventListener(
-        "scroll",
-        this.initialScrollHandler,
-      );
+    this.scrollTarget?.removeEventListener("scroll", this.initialScrollHandler);
   };
 }
 

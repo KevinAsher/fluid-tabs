@@ -40,6 +40,10 @@ export default class TabIndicatorManager {
     this.element.style.width = `${currentTab.clientWidth}px`;
   };
 
+  cleanup = () => {
+    this.tabIndicatorAnimation?.cancel();
+  }
+
   update = ({
     relativeScroll,
     direction,

@@ -2,7 +2,7 @@ export default class ActionController {
   public canChangeTab = true;
   public canAnimateScrollToPanel = true;
 
-  changeActivePanel = async (runner: () => Promise<boolean | void>) => {
+  changeActivePanel = async (callback: () => Promise<boolean | void>) => {
     this.canChangeTab = true;
 
     if (!this.canAnimateScrollToPanel) {
@@ -12,16 +12,16 @@ export default class ActionController {
 
     this.canChangeTab = false;
 
-    const hasSwitchedToPanel = await runner();
+    const hasSwitchedToPanel = await callback();
 
     if (hasSwitchedToPanel) {
       this.canChangeTab = true;
     }
   };
 
-  changeActiveTab = (runner: () => void) => {
+  changeActiveTab = (callback: () => void) => {
     if (this.canChangeTab) {
-      runner();
+      callback();
 
       this.canAnimateScrollToPanel = false;
       this.canChangeTab = false;

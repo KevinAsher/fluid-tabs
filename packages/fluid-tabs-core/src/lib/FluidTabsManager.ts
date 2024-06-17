@@ -60,8 +60,7 @@ export default class FluidTabsManager {
     this.actionController = new ActionController();
 
     this.win = ownerWindow(tabPanels);
-    this.resizeHandler &&
-      this.win.addEventListener("resize", this.resizeHandler);
+    this.win.addEventListener("resize", this.resizeHandler);
 
     if (typeof ResizeObserver !== "undefined" && this.resizeHandler) {
       this.resizeObserver = new ResizeObserver(this.resizeHandler);
@@ -71,9 +70,9 @@ export default class FluidTabsManager {
 
   cleanup = () => {
     this.scrollManager.cleanup();
+    this.tabIndicatorManager.cleanup();
     this.resizeObserver?.disconnect();
-    this.resizeHandler &&
-      this.win.removeEventListener("resize", this.resizeHandler);
+    this.win.removeEventListener("resize", this.resizeHandler);
   };
 
   getCurrentTab = () => {
@@ -103,9 +102,13 @@ export default class FluidTabsManager {
     });
   };
 
-  public changeActivePanel = async (value: Value) => {
+  public update = (value: Value) => {
     this.value = value;
 
+    this.changeActivePanel(value);
+  }
+
+  private changeActivePanel = (value: Value) => {
     this.actionController.changeActivePanel(() => {
       const index = this.getIndex(value);
       return this.tabPanelManager.animateToPanel(index);

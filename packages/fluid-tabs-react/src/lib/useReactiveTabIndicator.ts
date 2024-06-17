@@ -101,7 +101,7 @@ export default function useReactiveTabIndicator<T extends HTMLElement>({
   }, [tabPanels, tabIndicator, tabsRef]);
 
   useEffect(() => {
-    tabIndicatorManagerRef.current?.changeActivePanel(value);
+    tabIndicatorManagerRef.current?.update(value);
   }, [value]);
 
   const tabIndicatorProps = useMemo(
