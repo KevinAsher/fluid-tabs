@@ -559,7 +559,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fluid-tabs/core@npm:*, @fluid-tabs/core@workspace:packages/fluid-tabs-core":
+"@fluid-tabs/core@npm:^0.1.16, @fluid-tabs/core@workspace:packages/fluid-tabs-core":
   version: 0.0.0-use.local
   resolution: "@fluid-tabs/core@workspace:packages/fluid-tabs-core"
   dependencies:
@@ -573,7 +573,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluid-tabs/react@workspace:packages/fluid-tabs-react"
   dependencies:
-    "@fluid-tabs/core": "npm:*"
+    "@fluid-tabs/core": "npm:^0.1.16"
     "@testing-library/jest-dom": "npm:^5.16.4"
     "@testing-library/react": "npm:^13.3.0"
     "@testing-library/react-hooks": "npm:^8.0.1"
@@ -589,6 +589,7 @@ __metadata:
     sass: "npm:^1.54.0"
     typescript: "npm:^5.4.5"
     vite: "npm:^3.0.3"
+    vite-plugin-css-injected-by-js: "npm:^3.5.1"
   peerDependencies:
     react: ^18.2.0
     react-dom: ^18.2.0
@@ -7805,6 +7806,15 @@ __metadata:
     core-util-is: "npm:1.0.2"
     extsprintf: "npm:^1.2.0"
   checksum: 10/da548149dd9c130a8a2587c9ee71ea30128d1526925707e2d01ed9c5c45c9e9f86733c66a328247cdd5f7c1516fb25b0f959ba754bfbe15072aa99ff96468a29
+  languageName: node
+  linkType: hard
+
+"vite-plugin-css-injected-by-js@npm:^3.5.1":
+  version: 3.5.1
+  resolution: "vite-plugin-css-injected-by-js@npm:3.5.1"
+  peerDependencies:
+    vite: ">2.0.0-0"
+  checksum: 10/0715aa477247f2fbea960b4b3a67aa22ed7be7c6136cccf8a9a7be0368187d71e12cb4d289526d1a4ded1235098460f9af85c4412b3864cfbcdb005f3f7bd4aa
   languageName: node
   linkType: hard
 

@@ -8,9 +8,11 @@
   },
   "scripts": {
     "dev": "yarn npm-run-all --parallel dev-demo-mui watch-build-packages",
-    "build": "vite build",
+    "build": "yarn workspaces foreach -Rpi --from 'packages/*' run build",
     "watch-build-packages": "yarn workspaces foreach -Rpi --from 'packages/*' run build --watch",
-    "dev-demo-mui": "yarn workspace material-ui-demo dev"
+    "dev-demo-mui": "yarn workspace material-ui-demo dev",
+    "publish": "yarn workspaces foreach -Rp --from 'packages/*' run npm-publish",
+    "version-bump": "yarn workspaces foreach -R --from 'packages/*' version"
   },
   "packageManager": "yarn@4.2.2",
   "devDependencies": {

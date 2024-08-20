@@ -1,6 +1,6 @@
 {
   "name": "@fluid-tabs/react",
-  "version": "0.0.0",
+  "version": "0.1.16",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -8,10 +8,12 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "coverage": "vitest run --coverage"
+    "coverage": "vitest run --coverage",
+    "npm-publish": "npm publish"
   },
   "dependencies": {
-    "@fluid-tabs/core": "*"
+    "@fluid-tabs/core": "^0.1.16",
+    "vite-plugin-css-injected-by-js": "^3.5.1"
   },
   "peerDependencies": {
     "react": "^18.2.0",
@@ -44,14 +46,10 @@
     ".": {
       "import": "./dist/fluid-tabs-react.js",
       "require": "./dist/fluid-tabs-react.umd.js"
-    },
-    "./index.ts": {
-      "import": "./src/lib/index.ts",
-      "require": "./src/lib/index.ts"
-    },
-    "./style.css": {
-      "import": "./dist/style.css",
-      "require": "./dist/style.css"
     }
+  },
+  "publishConfig": {
+    "access": "public",
+    "directory": "dist"
   }
 }
