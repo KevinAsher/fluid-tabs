@@ -1,0 +1,37 @@
+{
+  "name": "@fluid-tabs/core",
+  "version": "0.1.16",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "coverage": "vitest run --coverage",
+    "npm-publish": "npm publish"
+  },
+  "dependencies": {
+    "animated-scroll-to": "^2.3.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5",
+    "vite": "^3.0.3"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/fluid-tabs-core.umd.js",
+  "module": "./dist/fluid-tabs-core.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/fluid-tabs-core.js",
+      "require": "./dist/fluid-tabs-core.umd.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "directory": "dist"
+  }
+}

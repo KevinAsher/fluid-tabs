@@ -1,0 +1,55 @@
+{
+  "name": "@fluid-tabs/react",
+  "version": "0.1.16",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "coverage": "vitest run --coverage",
+    "npm-publish": "npm publish"
+  },
+  "dependencies": {
+    "@fluid-tabs/core": "^0.1.16",
+    "vite-plugin-css-injected-by-js": "^3.5.1"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^5.16.4",
+    "@testing-library/react": "^13.3.0",
+    "@testing-library/react-hooks": "^8.0.1",
+    "@testing-library/user-event": "^14.3.0",
+    "@types/react": "^18.0.15",
+    "@types/react-dom": "^18.0.6",
+    "@vitejs/plugin-react": "^2.0.0",
+    "@vitest/ui": "^0.19.1",
+    "clsx": "^1.2.1",
+    "cy-mobile-commands": "^0.3.0",
+    "cypress": "^10.3.1",
+    "cypress-real-events": "^1.7.1",
+    "sass": "^1.54.0",
+    "typescript": "^5.4.5",
+    "vite": "^3.0.3"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/fluid-tabs-react.umd.js",
+  "module": "./dist/fluid-tabs-react.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/fluid-tabs-react.js",
+      "require": "./dist/fluid-tabs-react.umd.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "directory": "dist"
+  }
+}
