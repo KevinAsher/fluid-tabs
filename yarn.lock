@@ -559,7 +559,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fluid-tabs/core@npm:^0.1.16, @fluid-tabs/core@workspace:packages/fluid-tabs-core":
+"@fluid-tabs/core@npm:^0.1.17, @fluid-tabs/core@workspace:packages/fluid-tabs-core":
   version: 0.0.0-use.local
   resolution: "@fluid-tabs/core@workspace:packages/fluid-tabs-core"
   dependencies:
@@ -573,7 +573,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fluid-tabs/react@workspace:packages/fluid-tabs-react"
   dependencies:
-    "@fluid-tabs/core": "npm:^0.1.16"
+    "@fluid-tabs/core": "npm:^0.1.17"
     "@testing-library/jest-dom": "npm:^5.16.4"
     "@testing-library/react": "npm:^13.3.0"
     "@testing-library/react-hooks": "npm:^8.0.1"
