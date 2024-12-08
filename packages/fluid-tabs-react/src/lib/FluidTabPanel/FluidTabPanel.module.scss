@@ -3,3 +3,7 @@
   scroll-snap-align: start;
   scroll-snap-stop: always;
 }
+
+.innerScroll {
+  overflow-y: auto;
+}

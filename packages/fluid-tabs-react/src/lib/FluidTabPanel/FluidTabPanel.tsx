@@ -7,6 +7,7 @@ interface Props {
   className: string;
   children: React.ReactNode;
   component: React.ElementType;
+  innerScroll: boolean;
   rest: any;
 }
 
@@ -15,11 +16,16 @@ export default function FluidTabPanel({
   className,
   children,
   component: Component = "div",
+  innerScroll = false,
   ...rest
 }: Props) {
   return (
     <Component
-      className={clsx(classes.root, className)}
+      className={clsx(
+        classes.root,
+        { [classes.innerScroll]: innerScroll },
+        className,
+      )}
       style={style}
       {...rest}
     >
