@@ -1,6 +1,6 @@
 {
   "name": "@fluid-tabs/react",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,7 +12,7 @@
     "npm-publish": "npm publish"
   },
   "dependencies": {
-    "@fluid-tabs/core": "^0.1.17",
+    "@fluid-tabs/core": "^0.1.18",
     "vite-plugin-css-injected-by-js": "^3.5.1"
   },
   "peerDependencies": {

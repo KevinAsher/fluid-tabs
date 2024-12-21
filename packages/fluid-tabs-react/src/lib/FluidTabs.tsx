@@ -28,7 +28,7 @@ const FluidTabs = React.forwardRef((props: Props, ref) => {
   // Latest ref pattern - keep child props in sync with ref data
   React.useLayoutEffect(() => {
     React.Children.map(children, (child, index) => {
-      tabsRef.current!.valueToIndex.set(child.props.value ?? index, index);
+      tabsRef.current!.valueToIndex.set(child?.props?.value ?? index, index);
     });
   });
 
