@@ -475,7 +475,7 @@ function AppInner() {
             //   <Route
             //     path={"*"}
             //     element={
-            <FluidTabPanel key={i}>
+            <FluidTabPanel key={i} innerScroll>
               <StyledTabPanelContent img={img} title={title} />
             </FluidTabPanel>
           ),

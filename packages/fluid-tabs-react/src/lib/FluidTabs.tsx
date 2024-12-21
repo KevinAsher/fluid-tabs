@@ -19,6 +19,9 @@ const FluidTabs = React.forwardRef((props: Props, ref) => {
   }, []);
 
   const childrenWithRef = React.Children.map(children, (child, index) => {
+    if (!React.isValidElement(child)) {
+      return child;
+    }
     return React.cloneElement(child, { ref: addToRefs });
   });
 
